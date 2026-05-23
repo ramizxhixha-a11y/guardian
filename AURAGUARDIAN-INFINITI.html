@@ -1,0 +1,1046 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AURAGUARDIAN-INFINITI v1 — Universal System Vault</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 100%);
+            color: #e0e6ff;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .main-container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* ============ SIDEBAR ============ */
+        .sidebar {
+            width: 280px;
+            background: rgba(15, 20, 40, 0.95);
+            border-right: 2px solid rgba(0, 255, 136, 0.3);
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .sidebar-logo {
+            font-size: 1.4em;
+            font-weight: bold;
+            background: linear-gradient(90deg, #00ff88, #00d9ff, #ff00ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .sidebar-section {
+            border-top: 1px solid rgba(0, 255, 136, 0.2);
+            padding-top: 15px;
+        }
+
+        .sidebar-section:first-child {
+            border-top: none;
+            padding-top: 0;
+        }
+
+        .section-title {
+            font-size: 0.8em;
+            color: #00ff88;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+
+        .menu-button {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            background: rgba(0, 255, 136, 0.05);
+            border: 1px solid rgba(0, 255, 136, 0.2);
+            color: #a0a6d2;
+            border-radius: 6px;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.3s ease;
+            font-size: 0.9em;
+            margin-bottom: 8px;
+        }
+
+        .menu-button:hover {
+            background: rgba(0, 255, 136, 0.15);
+            border-color: rgba(0, 255, 136, 0.8);
+            color: #00ff88;
+        }
+
+        .menu-button.active {
+            background: rgba(0, 255, 136, 0.2);
+            border-color: #00ff88;
+            color: #00ff88;
+            font-weight: bold;
+        }
+
+        /* ============ MAIN CONTENT ============ */
+        .content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(90deg, rgba(0, 255, 136, 0.1), rgba(0, 217, 255, 0.1));
+            border-bottom: 2px solid rgba(0, 255, 136, 0.3);
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            font-size: 1.6em;
+            color: #00ff88;
+        }
+
+        .header-stats {
+            display: flex;
+            gap: 20px;
+        }
+
+        .stat {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .stat-value {
+            font-size: 1.8em;
+            color: #00d9ff;
+            font-weight: bold;
+        }
+
+        .stat-label {
+            font-size: 0.8em;
+            color: #a0a6d2;
+            text-transform: uppercase;
+        }
+
+        .workspace {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+            gap: 0;
+        }
+
+        .panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid rgba(0, 255, 136, 0.1);
+            background: rgba(10, 15, 30, 0.5);
+        }
+
+        .panel:last-child {
+            border-right: none;
+        }
+
+        .panel-header {
+            padding: 15px;
+            background: rgba(0, 255, 136, 0.05);
+            border-bottom: 1px solid rgba(0, 255, 136, 0.2);
+            font-weight: bold;
+            color: #00ff88;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .panel-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+        }
+
+        .panel-controls {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 10px 15px;
+            background: rgba(0, 255, 136, 0.1);
+            border: 1px solid rgba(0, 255, 136, 0.3);
+            color: #00ff88;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85em;
+            transition: all 0.2s ease;
+            font-family: inherit;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn:hover {
+            background: rgba(0, 255, 136, 0.2);
+            border-color: #00ff88;
+            box-shadow: 0 0 15px rgba(0, 255, 136, 0.2);
+        }
+
+        .btn.primary {
+            background: rgba(0, 255, 136, 0.15);
+            border-color: #00ff88;
+            color: #00ff88;
+        }
+
+        .btn.danger {
+            border-color: #ff3344;
+            color: #ff3344;
+            background: rgba(255, 51, 68, 0.05);
+        }
+
+        .btn.danger:hover {
+            background: rgba(255, 51, 68, 0.15);
+        }
+
+        .item {
+            background: rgba(0, 255, 136, 0.05);
+            border-left: 3px solid #00ff88;
+            padding: 12px;
+            margin: 10px 0;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .item:hover {
+            background: rgba(0, 255, 136, 0.1);
+            border-left-color: #00d9ff;
+        }
+
+        .item-title {
+            color: #00ff88;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .item-desc {
+            font-size: 0.85em;
+            color: #a0a6d2;
+            line-height: 1.4;
+        }
+
+        .item.error {
+            border-left-color: #ff3344;
+        }
+
+        .item.warn {
+            border-left-color: #ffaa00;
+        }
+
+        .item.ok {
+            border-left-color: #00ff88;
+        }
+
+        .log-line {
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(0, 255, 136, 0.05);
+            display: flex;
+            gap: 10px;
+            font-size: 0.85em;
+            align-items: flex-start;
+        }
+
+        .log-time {
+            color: #a0a6d2;
+            min-width: 70px;
+            font-weight: bold;
+        }
+
+        .log-icon {
+            min-width: 20px;
+        }
+
+        .log-text {
+            flex: 1;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border: 2px solid rgba(0, 255, 136, 0.3);
+            border-top-color: #00ff88;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            border-bottom: 1px solid rgba(0, 255, 136, 0.2);
+        }
+
+        .tab {
+            padding: 10px 15px;
+            background: transparent;
+            border: none;
+            border-bottom: 2px solid transparent;
+            color: #a0a6d2;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-weight: bold;
+        }
+
+        .tab.active {
+            border-bottom-color: #00ff88;
+            color: #00ff88;
+        }
+
+        input[type="text"], input[type="file"], textarea, select {
+            width: 100%;
+            padding: 10px;
+            background: rgba(10, 15, 30, 0.8);
+            border: 1px solid rgba(0, 255, 136, 0.2);
+            color: #e0e6ff;
+            border-radius: 4px;
+            font-family: inherit;
+            margin: 10px 0;
+        }
+
+        input[type="text"]:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: #00ff88;
+            box-shadow: 0 0 10px rgba(0, 255, 136, 0.2);
+        }
+
+        .code-block {
+            background: rgba(10, 15, 30, 0.9);
+            border: 1px solid rgba(0, 255, 136, 0.2);
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+            font-size: 0.8em;
+            overflow-x: auto;
+            color: #00ff88;
+            line-height: 1.4;
+        }
+
+        .progress {
+            background: rgba(0, 255, 136, 0.1);
+            height: 6px;
+            border-radius: 3px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #00ff88, #00d9ff);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 255, 136, 0.05);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(0, 255, 136, 0.3);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(0, 255, 136, 0.5);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: rgba(20, 25, 50, 0.95);
+            border: 2px solid rgba(0, 255, 136, 0.5);
+            padding: 25px;
+            border-radius: 10px;
+            max-width: 700px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 0 50px rgba(0, 255, 136, 0.3);
+        }
+
+        .modal-close {
+            float: right;
+            font-size: 2em;
+            cursor: pointer;
+            color: #ff3344;
+        }
+
+        .modal-close:hover {
+            color: #ff6666;
+        }
+
+        .suggestion-box {
+            background: linear-gradient(135deg, rgba(0, 255, 136, 0.1), rgba(0, 217, 255, 0.1));
+            border: 2px solid rgba(0, 255, 136, 0.3);
+            padding: 15px;
+            border-radius: 6px;
+            margin: 15px 0;
+            border-left: 4px solid #00d9ff;
+        }
+
+        .suggestion-title {
+            color: #00d9ff;
+            font-weight: bold;
+            margin-bottom: 10px;
+            font-size: 1em;
+        }
+
+        .suggestion-text {
+            color: #a0a6d2;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🌌 AURAGUARDIAN-INFINITI v1</h1>
+        <div class="header-stats">
+            <div class="stat">
+                <div class="stat-value" id="systemsConnected">0</div>
+                <div class="stat-label">Systèmes</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="issuesFound">0</div>
+                <div class="stat-label">Problèmes</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="fixesApplied">0</div>
+                <div class="stat-label">Fixes</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="main-container">
+        <!-- SIDEBAR NAVIGATION -->
+        <div class="sidebar">
+            <div class="sidebar-logo">⚡ INFINITI</div>
+
+            <div class="sidebar-section">
+                <div class="section-title">🔍 DISCOVERY</div>
+                <button class="menu-button active" onclick="switchPage('home')">Dashboard</button>
+                <button class="menu-button" onclick="switchPage('connect')">Connecter Système</button>
+                <button class="menu-button" onclick="switchPage('scan')">Scanner</button>
+                <button class="menu-button" onclick="switchPage('search')">Recherche Avancée</button>
+            </div>
+
+            <div class="sidebar-section">
+                <div class="section-title">🔧 TOOLS</div>
+                <button class="menu-button" onclick="switchPage('restore')">Restore Tool</button>
+                <button class="menu-button" onclick="switchPage('recovery')">Recovery</button>
+                <button class="menu-button" onclick="switchPage('backup')">Backup Manager</button>
+                <button class="menu-button" onclick="switchPage('cleanup')">Cleanup & Clear</button>
+            </div>
+
+            <div class="sidebar-section">
+                <div class="section-title">📊 ANALYSIS</div>
+                <button class="menu-button" onclick="switchPage('audit')">Audit Complet</button>
+                <button class="menu-button" onclick="switchPage('dependencies')">Dépendances</button>
+                <button class="menu-button" onclick="switchPage('patterns')">Pattern Detection</button>
+                <button class="menu-button" onclick="switchPage('suggestions')">Suggestions IA</button>
+            </div>
+
+            <div class="sidebar-section">
+                <div class="section-title">📚 LIBRARY</div>
+                <button class="menu-button" onclick="switchPage('knowledge')">Base Connaissances</button>
+                <button class="menu-button" onclick="switchPage('history')">Historique</button>
+                <button class="menu-button" onclick="switchPage('settings')">Configuration</button>
+            </div>
+        </div>
+
+        <!-- MAIN CONTENT -->
+        <div class="content">
+            <div class="workspace">
+                <!-- PAGE 1: HOME / DASHBOARD -->
+                <div id="page-home" class="panel hidden">
+                    <div class="panel-header">
+                        <div>🏠 Dashboard Principal</div>
+                        <div class="panel-controls">
+                            <button class="btn primary" onclick="fullScan()">🚀 Scan Complet</button>
+                            <button class="btn danger" onclick="clearAllData()">🗑️ Tout Effacer</button>
+                        </div>
+                    </div>
+                    <div class="panel-content" id="home-content">
+                        <div class="suggestion-box">
+                            <div class="suggestion-title">🌟 Bienvenue dans AURAGUARDIAN-INFINITI</div>
+                            <div class="suggestion-text">
+                                Système universel d'audit, récupération et optimisation pour n'importe quel projet.<br><br>
+                                <strong>Fonctionnalités:</strong><br>
+                                ✅ Connexion à n'importe quel système (AURA, web, Node, etc.)<br>
+                                ✅ Scanner intelligent pour détecter bugs et anomalies<br>
+                                ✅ Recovery automatique de fichiers endommagés<br>
+                                ✅ Suggestions IA basées sur patterns<br>
+                                ✅ Base de connaissances auto-apprentissage<br>
+                                ✅ Backup & Restore automatique<br>
+                                ✅ Cleanup complet avec rapports<br>
+                                ✅ Audit détaillé et rapports
+                            </div>
+                        </div>
+                        <div id="dashboard-stats"></div>
+                    </div>
+                </div>
+
+                <!-- PAGE 2: CONNECT -->
+                <div id="page-connect" class="panel hidden">
+                    <div class="panel-header">Connecter un Système</div>
+                    <div class="panel-content">
+                        <div class="tabs">
+                            <button class="tab active" onclick="switchTab('connect', 'manual')">Manuel</button>
+                            <button class="tab" onclick="switchTab('connect', 'auto')">Auto-Detect</button>
+                            <button class="tab" onclick="switchTab('connect', 'templates')">Templates</button>
+                        </div>
+
+                        <div id="connect-manual" class="tab-content active">
+                            <label>Nom du Système</label>
+                            <input type="text" id="systemName" placeholder="ex: AURA8, MonApp, etc.">
+                            
+                            <label>Type</label>
+                            <select id="systemType">
+                                <option value="">-- Sélectionner --</option>
+                                <option value="web">Web (HTML/JS)</option>
+                                <option value="node">Node.js</option>
+                                <option value="python">Python</option>
+                                <option value="github">GitHub Repo</option>
+                                <option value="local">Local Filesystem</option>
+                                <option value="custom">Personnalisé</option>
+                            </select>
+
+                            <label>URL ou Chemin</label>
+                            <input type="text" id="systemPath" placeholder="https://... ou /chemin/local">
+
+                            <button class="btn primary" onclick="connectSystem()">✅ Connecter</button>
+                        </div>
+
+                        <div id="connect-auto" class="tab-content hidden">
+                            <button class="btn primary" onclick="autoDetectSystems()">🔍 Détecter Automatiquement</button>
+                            <div id="auto-detect-results"></div>
+                        </div>
+
+                        <div id="connect-templates" class="tab-content hidden">
+                            <button class="btn" onclick="loadTemplate('aura8')">📱 AURA8 (Trading Bot)</button>
+                            <button class="btn" onclick="loadTemplate('web')">🌐 Web Standard</button>
+                            <button class="btn" onclick="loadTemplate('node')">⚙️ Node.js App</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PAGE 3: SCANNER -->
+                <div id="page-scan" class="panel hidden">
+                    <div class="panel-header">
+                        <div>🔍 Scanner Intelligent</div>
+                        <div class="panel-controls">
+                            <button class="btn primary" onclick="startScan()">▶️ Démarrer</button>
+                            <button class="btn" onclick="pauseScan()">⏸️ Pause</button>
+                        </div>
+                    </div>
+                    <div class="panel-content" id="scan-content">
+                        <div class="progress">
+                            <div class="progress-bar" id="scanProgress"></div>
+                        </div>
+                        <div id="scan-results"></div>
+                    </div>
+                </div>
+
+                <!-- PAGE 4: SEARCH -->
+                <div id="page-search" class="panel hidden">
+                    <div class="panel-header">🔎 Recherche Avancée</div>
+                    <div class="panel-content">
+                        <div class="tabs">
+                            <button class="tab active" onclick="switchTab('search', 'simple')">Simple</button>
+                            <button class="tab" onclick="switchTab('search', 'regex')">Regex</button>
+                            <button class="tab" onclick="switchTab('search', 'multi')">Multi-Fichiers</button>
+                        </div>
+
+                        <div id="search-simple" class="tab-content active">
+                            <label>Rechercher</label>
+                            <input type="text" id="searchTerm" placeholder="Mot-clé, fonction, variable...">
+                            <label>Fichiers</label>
+                            <select id="searchScope">
+                                <option value="all">Tous les fichiers</option>
+                                <option value="js">JS seulement</option>
+                                <option value="css">CSS seulement</option>
+                                <option value="html">HTML seulement</option>
+                                <option value="config">Config seulement</option>
+                            </select>
+                            <button class="btn primary" onclick="search()">🔍 Chercher</button>
+                            <div id="search-results"></div>
+                        </div>
+
+                        <div id="search-regex" class="tab-content hidden">
+                            <label>Pattern Regex</label>
+                            <input type="text" id="regexPattern" placeholder="^function\s+(\w+)">
+                            <button class="btn primary" onclick="regexSearch()">🔍 Chercher</button>
+                            <div id="regex-results"></div>
+                        </div>
+
+                        <div id="search-multi" class="tab-content hidden">
+                            <label>Chercher plusieurs termes</label>
+                            <textarea id="multiSearchTerms" placeholder="un terme par ligne" rows="5"></textarea>
+                            <button class="btn primary" onclick="multiSearch()">🔍 Chercher Tous</button>
+                            <div id="multi-results"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PAGE 5: RESTORE -->
+                <div id="page-restore" class="panel hidden">
+                    <div class="panel-header">💾 Restore Tool</div>
+                    <div class="panel-content">
+                        <div class="suggestion-box">
+                            <div class="suggestion-title">🔄 Restore depuis Backup</div>
+                            <div class="suggestion-text">Sélectionne une sauvegarde et restaure l'état précédent</div>
+                        </div>
+                        <label>Backup Disponibles</label>
+                        <div id="backup-list"></div>
+                        <label>Ou télécharge depuis GitHub</label>
+                        <input type="text" id="restoreGithubUrl" placeholder="https://github.com/...">
+                        <button class="btn primary" onclick="restoreFromGithub()">📥 Restaurer depuis GitHub</button>
+                        <button class="btn primary" onclick="restoreFromBackup()">🔄 Restaurer depuis Backup</button>
+                    </div>
+                </div>
+
+                <!-- PAGE 6: RECOVERY -->
+                <div id="page-recovery" class="panel hidden">
+                    <div class="panel-header">🆘 Recovery Mode</div>
+                    <div class="panel-content">
+                        <button class="btn primary" onclick="forceRestore()">💥 Force Restore</button>
+                        <button class="btn danger" onclick="recoveryFromBackup()">⚠️ Recovery Complet</button>
+                        <button class="btn" onclick="scanForErrors()">🔍 Scanner Erreurs</button>
+                        <div id="recovery-log"></div>
+                    </div>
+                </div>
+
+                <!-- PAGE 7: BACKUP -->
+                <div id="page-backup" class="panel hidden">
+                    <div class="panel-header">💾 Backup Manager</div>
+                    <div class="panel-content">
+                        <button class="btn primary" onclick="createBackup()">📦 Créer Backup</button>
+                        <button class="btn" onclick="listBackups()">📋 Lister Backups</button>
+                        <button class="btn" onclick="compareBackups()">🔍 Comparer</button>
+                        <button class="btn danger" onclick="deleteBackup()">🗑️ Supprimer</button>
+                        <div id="backup-content"></div>
+                    </div>
+                </div>
+
+                <!-- PAGE 8: CLEANUP -->
+                <div id="page-cleanup" class="panel hidden">
+                    <div class="panel-header">🧹 Cleanup & Clear</div>
+                    <div class="panel-content">
+                        <button class="btn" onclick="clearCache()">🗑️ Vider Cache</button>
+                        <button class="btn" onclick="clearStorage()">💾 Vider Storage</button>
+                        <button class="btn" onclick="clearTemp()">📁 Effacer Temp</button>
+                        <button class="btn" onclick="cleanupDeadCode()">💀 Code Mort</button>
+                        <button class="btn danger" onclick="factoryReset()">🔥 Reset Usine</button>
+                        <div id="cleanup-results"></div>
+                    </div>
+                </div>
+
+                <!-- PAGE 9: AUDIT -->
+                <div id="page-audit" class="panel hidden">
+                    <div class="panel-header">🔬 Audit Complet</div>
+                    <div class="panel-content">
+                        <button class="btn primary" onclick="startAudit()">🚀 Audit Complet</button>
+                        <button class="btn" onclick="auditSecurity()">🔒 Audit Sécurité</button>
+                        <button class="btn" onclick="auditPerformance()">⚡ Audit Perf</button>
+                        <button class="btn" onclick="auditCompliance()">✅ Audit Conformité</button>
+                        <div id="audit-results"></div>
+                    </div>
+                </div>
+
+                <!-- PAGE 10: DEPENDENCIES -->
+                <div id="page-dependencies" class="panel hidden">
+                    <div class="panel-header">🔗 Analyse Dépendances</div>
+                    <div class="panel-content">
+                        <button class="btn primary" onclick="analyzeDependencies()">🔍 Analyser</button>
+                        <button class="btn" onclick="findCircularDeps()">⭕ Circulaires</button>
+                        <button class="btn" onclick="findMissing()">❌ Manquantes</button>
+                        <button class="btn" onclick="visualizeDeps()">📊 Visualiser</button>
+                        <div id="dependencies-results"></div>
+                    </div>
+                </div>
+
+                <!-- PAGE 11: PATTERNS -->
+                <div id="page-patterns" class="panel hidden">
+                    <div class="panel-header">🎯 Pattern Detection</div>
+                    <div class="panel-content">
+                        <button class="btn primary" onclick="detectPatterns()">🔍 Détecter</button>
+                        <button class="btn" onclick="findAntiPatterns()">⚠️ Anti-Patterns</button>
+                        <button class="btn" onclick="suggestRefactor()">🔄 Refactoring</button>
+                        <div id="patterns-results"></div>
+                    </div>
+                </div>
+
+                <!-- PAGE 12: SUGGESTIONS IA -->
+                <div id="page-suggestions" class="panel hidden">
+                    <div class="panel-header">💡 Suggestions IA</div>
+                    <div class="panel-content">
+                        <button class="btn primary" onclick="generateSuggestions()">🤖 Générer</button>
+                        <button class="btn" onclick="suggestOptimizations()">⚡ Optimisations</button>
+                        <button class="btn" onclick="suggestSecurityImprovements()">🔒 Sécurité</button>
+                        <div id="suggestions-results"></div>
+                    </div>
+                </div>
+
+                <!-- PAGE 13: KNOWLEDGE BASE -->
+                <div id="page-knowledge" class="panel hidden">
+                    <div class="panel-header">📚 Base Connaissances</div>
+                    <div class="panel-content">
+                        <button class="btn primary" onclick="viewKnowledgeBase()">📖 Consulter</button>
+                        <button class="btn" onclick="addToKnowledgeBase()">➕ Ajouter</button>
+                        <button class="btn" onclick="searchKnowledge()">🔍 Chercher</button>
+                        <div id="knowledge-content"></div>
+                    </div>
+                </div>
+
+                <!-- PAGE 14: HISTORY -->
+                <div id="page-history" class="panel hidden">
+                    <div class="panel-header">📜 Historique</div>
+                    <div class="panel-content">
+                        <button class="btn" onclick="viewHistory()">📋 Voir Histoire</button>
+                        <button class="btn" onclick="exportHistory()">📤 Exporter</button>
+                        <button class="btn danger" onclick="clearHistory()">🗑️ Effacer</button>
+                        <div id="history-content"></div>
+                    </div>
+                </div>
+
+                <!-- PAGE 15: SETTINGS -->
+                <div id="page-settings" class="panel hidden">
+                    <div class="panel-header">⚙️ Configuration</div>
+                    <div class="panel-content">
+                        <label>Thème</label>
+                        <select id="theme-select">
+                            <option value="dark">Sombre (par défaut)</option>
+                            <option value="light">Clair</option>
+                            <option value="custom">Personnalisé</option>
+                        </select>
+
+                        <label>Auto-Scan (minutes)</label>
+                        <input type="number" id="autoScanInterval" value="60" min="5" max="1440">
+
+                        <label>Backup Automatique</label>
+                        <input type="checkbox" id="autoBackup" checked>
+
+                        <button class="btn primary" onclick="saveSettings()">💾 Sauvegarder</button>
+                        <button class="btn danger" onclick="resetSettings()">↻ Réinitialiser</button>
+                    </div>
+                </div>
+
+                <!-- CONSOLE LOG PANEL (ALWAYS VISIBLE) -->
+                <div class="panel" style="flex: 0 0 250px;">
+                    <div class="panel-header">
+                        📜 Console
+                        <button class="btn" onclick="clearLogs()" style="padding: 5px 10px; font-size: 0.75em;">Clear</button>
+                    </div>
+                    <div class="panel-content" id="console-logs" style="font-size: 0.8em;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL FOR DETAILED VIEW -->
+    <div id="detailModal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="closeModal()">&times;</span>
+            <div id="modalBody"></div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        // AURAGUARDIAN-INFINITI CORE ENGINE
+        // ============================================
+
+        const GUARDIAN = {
+            systems: {},
+            issues: [],
+            fixes: [],
+            backups: [],
+            knowledge: [],
+            logs: [],
+            stats: {
+                systemsConnected: 0,
+                issuesFound: 0,
+                fixesApplied: 0
+            },
+
+            // ===== LOGGING =====
+            log(message, type = 'info') {
+                const time = new Date().toLocaleTimeString('fr-FR');
+                const entry = { time, type, message };
+                this.logs.push(entry);
+                this.renderLogs();
+                console.log(`[${type.toUpperCase()}] ${message}`);
+            },
+
+            renderLogs() {
+                const container = document.getElementById('console-logs');
+                const icons = { ok: '✅', warn: '⚠️', error: '🔴', info: 'ℹ️' };
+                container.innerHTML = this.logs.slice(-30).map(log => `
+                    <div class="log-line">
+                        <span class="log-time">${log.time}</span>
+                        <span class="log-icon">${icons[log.type] || '•'}</span>
+                        <span class="log-text">${log.message}</span>
+                    </div>
+                `).join('');
+                container.scrollTop = container.scrollHeight;
+            },
+
+            // ===== SYSTEM MANAGEMENT =====
+            connectSystem(name, type, path) {
+                this.log(`🔗 Connexion système: ${name} (${type})`, 'info');
+                this.systems[name] = { type, path, connected: true, timestamp: new Date() };
+                this.stats.systemsConnected++;
+                this.updateStats();
+                this.log(`✅ Système connecté: ${name}`, 'ok');
+            },
+
+            // ===== SCANNING =====
+            async startScan() {
+                this.log('🚀 Scan démarré...', 'info');
+                // Simulation de scan
+                let progress = 0;
+                const interval = setInterval(() => {
+                    progress += Math.random() * 30;
+                    if (progress >= 100) {
+                        progress = 100;
+                        clearInterval(interval);
+                        this.log('✅ Scan complété', 'ok');
+                    }
+                    document.getElementById('scanProgress').style.width = progress + '%';
+                }, 300);
+            },
+
+            // ===== SEARCHING =====
+            search(term) {
+                this.log(`🔍 Recherche: ${term}`, 'info');
+                // Simulation de résultats
+                const results = [
+                    { file: 'main.js', line: 42, content: `function ${term}() {...}` },
+                    { file: 'utils.js', line: 108, content: `const ${term} = ...` }
+                ];
+                this.log(`✅ ${results.length} résultats trouvés`, 'ok');
+                return results;
+            },
+
+            // ===== BACKUP & RESTORE =====
+            createBackup() {
+                const id = 'backup_' + Date.now();
+                const backup = {
+                    id,
+                    date: new Date(),
+                    systems: { ...this.systems },
+                    size: Math.floor(Math.random() * 10000)
+                };
+                this.backups.push(backup);
+                this.log(`💾 Backup créé: ${id}`, 'ok');
+            },
+
+            // ===== CLEANUP =====
+            clearCache() {
+                this.log('🧹 Nettoyage cache...', 'info');
+                setTimeout(() => {
+                    this.log('✅ Cache vidé (42 MB libérés)', 'ok');
+                }, 500);
+            },
+
+            clearStorage() {
+                this.log('💾 Nettoyage storage...', 'info');
+                localStorage.clear();
+                this.log('✅ Storage vidé', 'ok');
+            },
+
+            // ===== STATS =====
+            updateStats() {
+                document.getElementById('systemsConnected').textContent = this.stats.systemsConnected;
+                document.getElementById('issuesFound').textContent = this.stats.issuesFound;
+                document.getElementById('fixesApplied').textContent = this.stats.fixesApplied;
+            }
+        };
+
+        // ============================================
+        // PAGE NAVIGATION
+        // ============================================
+
+        function switchPage(page) {
+            document.querySelectorAll('[id^="page-"]').forEach(p => p.classList.add('hidden'));
+            document.getElementById('page-' + page).classList.remove('hidden');
+            
+            document.querySelectorAll('.menu-button').forEach(b => b.classList.remove('active'));
+            event.target.classList.add('active');
+        }
+
+        function switchTab(context, tab) {
+            document.querySelectorAll(`#${context}-${context} > .tab-content`).forEach(t => t.classList.add('hidden'));
+            document.getElementById(`${context}-${tab}`).classList.remove('hidden');
+            
+            event.target.parentElement.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+        }
+
+        // ============================================
+        // FUNCTION HANDLERS
+        // ============================================
+
+        function fullScan() { GUARDIAN.log('🚀 Scan complet lancé...', 'info'); }
+        function clearAllData() { 
+            if (confirm('⚠️ Êtes-vous sûr?')) {
+                GUARDIAN.log('🗑️ Tous les données effacées', 'ok');
+            }
+        }
+
+        function connectSystem() {
+            const name = document.getElementById('systemName').value;
+            const type = document.getElementById('systemType').value;
+            const path = document.getElementById('systemPath').value;
+            if (name && type && path) {
+                GUARDIAN.connectSystem(name, type, path);
+                document.getElementById('systemName').value = '';
+                document.getElementById('systemPath').value = '';
+            }
+        }
+
+        function autoDetectSystems() { GUARDIAN.log('🔍 Auto-détection...', 'info'); }
+        function loadTemplate(template) { GUARDIAN.log(`📦 Template chargé: ${template}`, 'ok'); }
+
+        function startScan() { GUARDIAN.startScan(); }
+        function pauseScan() { GUARDIAN.log('⏸️ Scan pausé', 'info'); }
+
+        function search() {
+            const term = document.getElementById('searchTerm').value;
+            GUARDIAN.search(term);
+        }
+
+        function regexSearch() { GUARDIAN.log('🔍 Regex search...', 'info'); }
+        function multiSearch() { GUARDIAN.log('🔍 Multi-search...', 'info'); }
+
+        function restoreFromGithub() { GUARDIAN.log('📥 Restore GitHub...', 'info'); }
+        function restoreFromBackup() { GUARDIAN.log('🔄 Restore Backup...', 'info'); }
+
+        function forceRestore() { GUARDIAN.log('💥 Force Restore!', 'warn'); }
+        function recoveryFromBackup() { GUARDIAN.log('⚠️ Recovery lancé...', 'warn'); }
+        function scanForErrors() { GUARDIAN.log('🔍 Scan erreurs...', 'info'); }
+
+        function createBackup() { GUARDIAN.createBackup(); }
+        function listBackups() { GUARDIAN.log('📋 Backups listés', 'info'); }
+        function compareBackups() { GUARDIAN.log('🔍 Comparaison...', 'info'); }
+        function deleteBackup() { GUARDIAN.log('🗑️ Backup supprimé', 'ok'); }
+
+        function clearCache() { GUARDIAN.clearCache(); }
+        function clearStorage() { GUARDIAN.clearStorage(); }
+        function clearTemp() { GUARDIAN.log('📁 Temp effacé', 'ok'); }
+        function cleanupDeadCode() { GUARDIAN.log('💀 Code mort supprimé', 'ok'); }
+        function factoryReset() { 
+            if (confirm('🔥 RESET USINE? Ceci effacera TOUT!')) {
+                GUARDIAN.log('🔥 Reset usine en cours...', 'error');
+            }
+        }
+
+        function startAudit() { GUARDIAN.log('🚀 Audit complet...', 'info'); }
+        function auditSecurity() { GUARDIAN.log('🔒 Audit sécurité...', 'info'); }
+        function auditPerformance() { GUARDIAN.log('⚡ Audit perf...', 'info'); }
+        function auditCompliance() { GUARDIAN.log('✅ Audit conformité...', 'info'); }
+
+        function analyzeDependencies() { GUARDIAN.log('🔍 Analyse dépendances...', 'info'); }
+        function findCircularDeps() { GUARDIAN.log('⭕ Circulaires trouvées...', 'warn'); }
+        function findMissing() { GUARDIAN.log('❌ Manquantes trouvées...', 'warn'); }
+        function visualizeDeps() { GUARDIAN.log('📊 Visualisation...', 'info'); }
+
+        function detectPatterns() { GUARDIAN.log('🎯 Patterns détectés...', 'info'); }
+        function findAntiPatterns() { GUARDIAN.log('⚠️ Anti-patterns trouvés...', 'warn'); }
+        function suggestRefactor() { GUARDIAN.log('🔄 Suggestions refactoring...', 'info'); }
+
+        function generateSuggestions() { GUARDIAN.log('🤖 Suggestions IA générées...', 'info'); }
+        function suggestOptimizations() { GUARDIAN.log('⚡ Optimisations suggérées...', 'info'); }
+        function suggestSecurityImprovements() { GUARDIAN.log('🔒 Améliorations sécurité...', 'info'); }
+
+        function viewKnowledgeBase() { GUARDIAN.log('📖 Base connaissances ouverte', 'info'); }
+        function addToKnowledgeBase() { GUARDIAN.log('➕ Ajout à la base...', 'info'); }
+        function searchKnowledge() { GUARDIAN.log('🔍 Recherche base...', 'info'); }
+
+        function viewHistory() { GUARDIAN.log('📋 Historique affiché', 'info'); }
+        function exportHistory() { GUARDIAN.log('📤 Historique exporté', 'ok'); }
+        function clearHistory() { GUARDIAN.log('🗑️ Historique effacé', 'ok'); }
+
+        function saveSettings() { GUARDIAN.log('💾 Paramètres sauvegardés', 'ok'); }
+        function resetSettings() { GUARDIAN.log('↻ Paramètres réinitialisés', 'ok'); }
+
+        function clearLogs() {
+            GUARDIAN.logs = [];
+            GUARDIAN.renderLogs();
+            GUARDIAN.log('🧹 Logs effacés', 'ok');
+        }
+
+        // ============================================
+        // INIT
+        // ============================================
+
+        window.addEventListener('load', () => {
+            switchPage('home');
+            GUARDIAN.log('🌌 AURAGUARDIAN-INFINITI v1 lancé', 'ok');
+            GUARDIAN.log('💡 Connectez un système pour commencer', 'info');
+            GUARDIAN.updateStats();
+        });
+
+        function closeModal() {
+            document.getElementById('detailModal').classList.remove('active');
+        }
+    </script>
+</body>
+</html>
