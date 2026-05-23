@@ -1,0 +1,263 @@
+{
+  "auraguardian_aura8_template": {
+    "version": "1.0",
+    "system_name": "AURA8",
+    "system_type": "web",
+    "description": "Trading Bot avec apprentissage génétique et persistance dual-write",
+    
+    "connection": {
+      "primary_repo": "https://github.com/ramizxhixha-a11y/aura",
+      "deployed_url": "https://ramizxhixha-a11y.github.io/aura/AURA8_v118.html",
+      "upload_endpoints": [
+        "https://github.com/ramizxhixha-a11y/aura/upload/main",
+        "https://github.com/ramizxhixha-a11y/aura/upload/main/js",
+        "https://github.com/ramizxhixha-a11y/aura/upload/main/css"
+      ]
+    },
+
+    "scanner_config": {
+      "critical_files": [
+        "AURA8_v118.html",
+        "js/00-backup-state.js",
+        "js/00b-persistance-override.js",
+        "js/01-chrono-network.js",
+        "js/02-state-init.js",
+        "js/09k-init.js",
+        "css/15-v59-settings-modal.css",
+        "css/24-header-l1.css",
+        "sw.js"
+      ],
+      "critical_functions": [
+        "renderAll",
+        "loadState",
+        "saveState",
+        "openPosition",
+        "closePosition",
+        "learnFromOutcome",
+        "buildSnapshot"
+      ],
+      "critical_ids": [
+        "#cashVal",
+        "#cashPct",
+        "#tradVal",
+        "#tradPct",
+        "#tradHealthSub",
+        "#levReserveVal",
+        "#levBorrowedSub",
+        "#fiscalResVal",
+        "#fiscalResSub",
+        "#ownFundsVal",
+        "#ownFundsSub"
+      ]
+    },
+
+    "known_bugs": [
+      {
+        "id": "BUG-001",
+        "name": "Régression cycle au reload",
+        "status": "RESOLVED",
+        "version_fixed": "120.3",
+        "file": "js/00b-persistance-override.js",
+        "description": "Cycle revient à 54h au reload (snapshot récursif)"
+      },
+      {
+        "id": "BUG-004",
+        "name": "renderAll() manquant dans loadState()",
+        "status": "FIX_READY",
+        "version_fix": "121.1",
+        "file": "js/02-state-init.js",
+        "description": "Cards affichent $0 au boot",
+        "fix_code": "if (typeof renderAll === 'function') { renderAll(); }",
+        "fix_location": "Fin de loadState(), avant return"
+      }
+    ],
+
+    "storage_analysis": {
+      "localStorage": {
+        "keys": [
+          "nexus_state_v2",
+          "nexusSnap_A",
+          "nexusSnap_B",
+          "nexusSnap_C",
+          "nexusSnap_latest",
+          "nexusInternal_1",
+          "aura_last_auto_backup_date"
+        ],
+        "critical_key": "nexus_state_v2"
+      },
+      "indexedDB": {
+        "database": "NEXUS_DB",
+        "version": "3",
+        "stores": ["state", "trades", "fees"],
+        "critical_store": "state"
+      }
+    },
+
+    "rules_absolute": [
+      {
+        "id": "RULE-1",
+        "name": "Ne jamais modifier botAutoMode (bot)",
+        "description": "S.botAutoMode est SACRÉ. Seul l'user peut changer AUTO/MANU",
+        "violation_files": ["js/04-v8-0-livraison-35-mode-max-permissif-v.js", "js/07-v90-mode-bunker-sos.js"]
+      },
+      {
+        "id": "RULE-2",
+        "name": "Ne jamais modifier tradingMode (bot)",
+        "description": "S.tradingMode ne doit jamais être changé par le bot"
+      },
+      {
+        "id": "RULE-3",
+        "name": "Architecture modulaire (depuis v118)",
+        "description": "Fichiers JS/CSS séparés dans /js et /css, pas de mono-fichier"
+      },
+      {
+        "id": "RULE-4",
+        "name": "Zéro perte inter-version",
+        "description": "Chaque version conserve 100% des fonctionnalités précédentes"
+      }
+    ],
+
+    "suggested_scans": [
+      {
+        "name": "Storage Integrity Check",
+        "description": "Vérifier localStorage et IndexedDB synchronisés",
+        "priority": "CRITICAL"
+      },
+      {
+        "name": "DOM IDs Validation",
+        "description": "Vérifier tous les IDs critiques présents",
+        "priority": "HIGH"
+      },
+      {
+        "name": "Function Call Analysis",
+        "description": "Vérifier que renderAll() est appelée au boot",
+        "priority": "HIGH"
+      },
+      {
+        "name": "Rule Violations Audit",
+        "description": "Chercher S.botAutoMode et S.tradingMode modifications",
+        "priority": "CRITICAL"
+      },
+      {
+        "name": "Performance Profiling",
+        "description": "Vérifier simTick() dure <150ms",
+        "priority": "MEDIUM"
+      }
+    ],
+
+    "recovery_procedures": [
+      {
+        "scenario": "AURA affiche $0 au boot",
+        "diagnosis": "BUG-004: renderAll() manquant",
+        "steps": [
+          "1. Fetch js/02-state-init.js",
+          "2. Chercher fin de loadState()",
+          "3. Ajouter: if (typeof renderAll === 'function') { renderAll(); }",
+          "4. Upload sur GitHub",
+          "5. Test avec cache-bust (?v=118&t=HHMM)"
+        ]
+      },
+      {
+        "scenario": "Cycle a reset à 0 ou 12h au reload",
+        "diagnosis": "BUG-001 (RÉSOLU) ou storage corrompu",
+        "steps": [
+          "1. Vérifier version 00b-persistance-override.js >= v120.3",
+          "2. Vider localStorage + IndexedDB",
+          "3. Restaurer depuis backup (force-restore-v2.html)",
+          "4. Vérifier js/00b-persistance-override.js appliqué"
+        ]
+      },
+      {
+        "scenario": "Mode affichage AUTO mais vraiment MANU",
+        "diagnosis": "Désync UI/Storage",
+        "steps": [
+          "1. Vérifier loadState() en 00b-persistance-override.js",
+          "2. Vérifier anti-régression (compare cycles, keep highest)",
+          "3. Resync manuellement: localStorage = IndexedDB"
+        ]
+      }
+    ],
+
+    "optimization_suggestions": [
+      {
+        "category": "Performance",
+        "suggestion": "simTick() devrait rester <150ms",
+        "expected_impact": "UI responsif, pas de lag"
+      },
+      {
+        "category": "Storage",
+        "suggestion": "Viser size <15MB avec agentLessons rotation",
+        "expected_impact": "Sauvegarde/restore rapide (<5s)"
+      },
+      {
+        "category": "Code Quality",
+        "suggestion": "Supprimer blob v105 obsolète (~7000 lignes)",
+        "expected_impact": "Fichier 09 plus lisible"
+      },
+      {
+        "category": "Architecture",
+        "suggestion": "Refonte complète fichier 09 (50k+ lignes)",
+        "expected_impact": "Maintenabilité future"
+      }
+    ],
+
+    "backup_locations": {
+      "github_backup": "Drive Google: Aura8/AURA8.HTML/ (99 fichiers)",
+      "storage_backup": "localStorage: nexusSnap_A/B/C rotation",
+      "force_restore_tool": "https://ramizxhixha-a11y.github.io/aura/force-restore-v2.html",
+      "code_search": "https://ramizxhixha-a11y.github.io/aura/code-search.html"
+    },
+
+    "test_scenarios": [
+      {
+        "name": "Boot Test",
+        "steps": ["1. Reload page", "2. Attends 5s", "3. Vérify: IDs #cashVal, #tradVal remplis", "4. Vérify: pas de $0"]
+      },
+      {
+        "name": "Cycle Continuity",
+        "steps": ["1. Laisser AURA tourner 50+ cycles", "2. Reload", "3. Vérify cycle ≈ 50 (pas reset)"]
+      },
+      {
+        "name": "Mode Switch",
+        "steps": ["1. Cliquer mode AUTO", "2. Cliquer mode MANU", "3. Vérify UI + storage sync"]
+      },
+      {
+        "name": "Storage Sync",
+        "steps": ["1. Ouvrir 2 onglets AURA", "2. Changer mode dans onglet 1", "3. Vérify change visible immédiatement en onglet 2"]
+      }
+    ],
+
+    "deployment_checklist": [
+      "✅ Version fichier correspondant au numéro",
+      "✅ Sans NULL bytes ou corruption",
+      "✅ Syntaxe JS valide (node --check)",
+      "✅ Tous les IDs DOM présents",
+      "✅ renderAll() appelée après loadState()",
+      "✅ Pas de S.botAutoMode = (sauf handlers UI)",
+      "✅ Pas de S.tradingMode = (jamais modifié)",
+      "✅ Zéro fonctionnalité supprimée",
+      "✅ Audit 10-points complété",
+      "✅ Test local validé",
+      "✅ Upload sur GitHub (Replace existing)",
+      "✅ Lien test avec cache-bust donné"
+    ],
+
+    "environment": {
+      "platform": "GitHub Pages + Android Tablette",
+      "no_devtools": true,
+      "no_manual_editing": true,
+      "no_patches_allowed": true,
+      "storage": "localStorage + IndexedDB dual-write",
+      "modes": {
+        "trading": ["sim (AA)", "paperReal (EV)", "real (RE)"],
+        "execution": ["AUTO", "MANU"]
+      }
+    },
+
+    "knowledge_base_integration": {
+      "location": "../aura-guardian-knowledge-base.json",
+      "sync_on_update": true,
+      "auto_learn": true
+    }
+  }
+}
