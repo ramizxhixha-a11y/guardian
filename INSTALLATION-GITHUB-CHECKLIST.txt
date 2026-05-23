@@ -1,0 +1,253 @@
+╔════════════════════════════════════════════════════════════════════════════════╗
+║     AURAGUARDIAN-INFINITI — INSTALLATION GITHUB (CHECKLIST RAPIDE)           ║
+║                         ~ 15 minutes pour tout                               ║
+╚════════════════════════════════════════════════════════════════════════════════╝
+
+AVANT TOUT:
+✅ Tu as un compte GitHub? Sinon: https://github.com/signup
+✅ Tu as les fichiers à uploader? Dossier: /mnt/user-data/outputs/
+
+════════════════════════════════════════════════════════════════════════════════
+
+## ÉTAPE 1: CRÉER LE REPO (2 minutes)
+
+1. Va: https://github.com/new
+2. Repository name: auraguardian-infiniti
+3. Description: Universal system audit, recovery & optimization
+4. Visibility: PUBLIC ✓
+5. Initialize with:
+   ☑ Add a README file
+   ☑ Add .gitignore (Node)
+   ☑ License: MIT
+6. Clique: CREATE REPOSITORY
+
+✅ Repo créé!
+📍 URL: https://github.com/TON-PSEUDO/auraguardian-infiniti
+
+════════════════════════════════════════════════════════════════════════════════
+
+## ÉTAPE 2: UPLOADER LES FICHIERS (8 minutes)
+
+### 2.1: Fichier Principal (1 min)
+
+1. Va sur: https://github.com/TON-PSEUDO/auraguardian-infiniti
+2. Clique: Add file → Upload files
+3. **Drag & drop** AURAGUARDIAN-INFINITI.html
+4. Commit message: Add: AURAGUARDIAN-INFINITI.html v1
+5. Clique: Commit changes
+
+✅ Fichier uploadé!
+
+### 2.2: Index.html (1 min)
+
+1. Add file → Create new file
+2. Name: index.html
+3. Contenu:
+```html
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="refresh" content="0; url=AURAGUARDIAN-INFINITI.html" />
+</head>
+</html>
+```
+4. Commit: Add: index.html
+5. Commit changes
+
+✅ Index créé!
+
+### 2.3: README (1 min)
+
+1. Clique "README.md" (créé automatiquement)
+2. Clique le crayon (Edit)
+3. Efface tout, copy-paste le contenu de AURAGUARDIAN-INFINITI-README.md
+4. Commit: Update: Complete documentation
+5. Commit changes
+
+✅ README mis à jour!
+
+### 2.4: Template AURA8 (1 min)
+
+1. Add file → Upload files
+2. Sélectionne: aura8.template.json
+3. Clique: Commit changes
+
+✅ Template uploadé!
+
+### 2.5: .gitignore (1 min)
+
+1. Add file → Create new file
+2. Name: .gitignore
+3. Contenu:
+```
+*.log
+*.tmp
+cache/
+backups/
+node_modules/
+.DS_Store
+```
+4. Commit: Add .gitignore
+5. Commit changes
+
+✅ Gitignore créé!
+
+### 2.6: Docs (2 min)
+
+1. Add file → Create new file
+2. Name: docs/ARCHITECTURE.md
+3. Contenu minimal:
+```markdown
+# Architecture
+
+## Core Engine
+GUARDIAN object with 9 modules
+
+## 15 Pages
+Dashboard, Connect, Scanner, Search, Restore, Recovery, Backup, Cleanup, Audit, Dependencies, Patterns, Suggestions, Knowledge, History, Settings
+
+## Technology
+HTML5, Vanilla JS, CSS3, localStorage, IndexedDB
+No external dependencies
+```
+4. Commit: Add: Architecture docs
+5. Commit changes
+
+✅ Docs créés!
+
+════════════════════════════════════════════════════════════════════════════════
+
+## ÉTAPE 3: ACTIVER GITHUB PAGES (3 minutes)
+
+1. Va sur ton repo
+2. Clique: Settings (onglet)
+3. Clique: Pages (sidebar)
+4. Source: Deploy from a branch
+5. Branch: main
+6. Folder: / (root)
+7. Clique: Save
+
+⏳ Attends 5-10 secondes...
+
+✅ Message vert: "Your site is live at..."
+
+════════════════════════════════════════════════════════════════════════════════
+
+## ÉTAPE 4: TESTER (2 minutes)
+
+1. Copie l'URL GitHub Pages (du message vert)
+   https://TON-PSEUDO.github.io/auraguardian-infiniti/
+
+2. Ouvre dans le navigateur
+
+3. Vérifie:
+   ✅ Sidebar visible (bleu/vert)
+   ✅ Menu fonctionnel
+   ✅ Dashboard visible
+   ✅ Console à droite
+   ✅ Pas d'erreurs
+
+✅ C'EST PRÊT!
+
+════════════════════════════════════════════════════════════════════════════════
+
+## ÉTAPE 5: OPTIONNEL - CRÉER RELEASE (1 min)
+
+1. Va: Releases (sidebar)
+2. Create a new release
+3. Tag: v1.0.0
+4. Title: AURAGUARDIAN-INFINITI v1.0.0
+5. Description: Initial Release - Universal System Vault
+6. Publish release
+
+✅ Release créé!
+
+════════════════════════════════════════════════════════════════════════════════
+
+## LIENS FINAUX À MÉMORISER
+
+App (live):
+https://TON-PSEUDO.github.io/auraguardian-infiniti/
+
+Repo (code):
+https://github.com/TON-PSEUDO/auraguardian-infiniti
+
+Éditer README:
+https://github.com/TON-PSEUDO/auraguardian-infiniti/edit/main/README.md
+
+Settings:
+https://github.com/TON-PSEUDO/auraguardian-infiniti/settings/pages
+
+════════════════════════════════════════════════════════════════════════════════
+
+## ❌ SI ÇA NE MARCHE PAS
+
+### "404 Not Found"
+→ Settings → Pages
+→ Vérifie: Source = "main", Folder = "/"
+→ Attends 10 minutes (première fois)
+
+### "Can't see GitHub Pages option"
+→ Crée un fichier vide: docs/index.md
+→ Commit
+→ Attends 5 min
+→ Réessaie
+
+### "AURAGUARDIAN-INFINITI.html affiche du texte (pas de l'app)"
+→ Crée _config.yml à la racine:
+```yaml
+include:
+  - ".html"
+```
+→ Attends 5 min
+
+### "index.html redirect ne marche pas"
+→ Remplace le contenu par:
+```html
+<script>window.location.href = 'AURAGUARDIAN-INFINITI.html';</script>
+```
+
+════════════════════════════════════════════════════════════════════════════════
+
+## ✅ FINAL CHECKLIST
+
+Au bout du processus, tu dois avoir:
+
+- [ ] Repo créé: auraguardian-infiniti
+- [ ] AURAGUARDIAN-INFINITI.html uploadé
+- [ ] index.html créé
+- [ ] README.md mis à jour
+- [ ] aura8.template.json uploadé
+- [ ] .gitignore créé
+- [ ] docs/ avec ARCHITECTURE.md
+- [ ] GitHub Pages activé
+- [ ] URL publique fonctionnelle
+- [ ] App visible et responsive
+- [ ] Tous les boutons cliquables
+- [ ] Console logs fonctionnels
+- [ ] Release v1.0.0 créé (optionnel)
+
+════════════════════════════════════════════════════════════════════════════════
+
+## 🎯 PROCHAINES UTILISATIONS
+
+Après installation:
+
+1. Ouvre AURAGUARDIAN-INFINITI
+2. Connecte AURA8: https://github.com/ramizxhixha-a11y/aura
+3. Lance Scanner
+4. Détecte BUG-004
+5. Applique suggestions
+6. Vérifie fixes
+
+════════════════════════════════════════════════════════════════════════════════
+
+C'EST FINI! 🎉
+
+Tu as AURAGUARDIAN-INFINITI installé et accessible publiquement.
+
+URL: https://TON-PSEUDO.github.io/auraguardian-infiniti/
+
+Prêt à auditer n'importe quel système!
+
+════════════════════════════════════════════════════════════════════════════════
