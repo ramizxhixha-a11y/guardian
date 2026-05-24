@@ -1,0 +1,2053 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AURA8 · Bug Splitting Forensic Auditor</title>
+<style>
+  :root {
+    --bg: #0a0e0a;
+    --bg-2: #0f1410;
+    --panel: #111814;
+    --line: #1c2820;
+    --ink: #d4f0d4;
+    --dim: #6b8a6b;
+    --acc: #5cff7e;
+    --warn: #ffcf5c;
+    --err: #ff5c6b;
+    --ok: #5cff7e;
+    --mono: ui-monospace, 'SF Mono', 'Cascadia Mono', 'Menlo', 'Consolas', 'Liberation Mono', 'Courier New', monospace;
+    --display: ui-monospace, 'SF Mono', 'Cascadia Mono', 'Menlo', 'Consolas', monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--mono);
+    font-size: 13px;
+    line-height: 1.5;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(circle at 15% 10%, rgba(92,255,126,0.06), transparent 40%),
+      radial-gradient(circle at 85% 90%, rgba(92,255,126,0.04), transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+  }
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      repeating-linear-gradient(0deg, transparent 0, transparent 2px, rgba(92,255,126,0.015) 2px, rgba(92,255,126,0.015) 3px);
+    pointer-events: none;
+    z-index: 1;
+  }
+  .wrap { position: relative; z-index: 2; max-width: 1400px; margin: 0 auto; padding: 24px; }
+
+  /* HEADER */
+  header {
+    border: 1px solid var(--line);
+    background: linear-gradient(180deg, var(--panel), var(--bg-2));
+    padding: 28px 32px;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 32px;
+    align-items: center;
+    margin-bottom: 24px;
+    position: relative;
+    overflow: hidden;
+  }
+  header::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--acc), transparent);
+    animation: scan 4s linear infinite;
+  }
+  @keyframes scan {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+  }
+  .logo {
+    font-family: var(--display);
+    font-size: 32px;
+    font-weight: 800;
+    color: var(--acc);
+    letter-spacing: -1px;
+    line-height: 1;
+    text-transform: uppercase;
+  }
+  .logo span { color: var(--ink); }
+  .tag {
+    font-size: 11px;
+    color: var(--dim);
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    margin-top: 6px;
+  }
+  .meta { font-size: 11px; color: var(--dim); }
+  .meta div { display: flex; justify-content: space-between; gap: 24px; padding: 2px 0; }
+  .meta b { color: var(--ink); font-weight: 500; }
+  .status-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--acc);
+    box-shadow: 0 0 8px var(--acc);
+    animation: pulse 2s ease-in-out infinite;
+    margin-right: 6px;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  /* NAV */
+  nav {
+    display: flex;
+    gap: 0;
+    margin-bottom: 24px;
+    border: 1px solid var(--line);
+    background: var(--panel);
+  }
+  nav button {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: var(--dim);
+    font-family: var(--mono);
+    font-size: 12px;
+    padding: 14px 18px;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    border-right: 1px solid var(--line);
+    transition: all 0.15s ease;
+    position: relative;
+  }
+  nav button:last-child { border-right: none; }
+  nav button:hover { color: var(--ink); background: rgba(92,255,126,0.04); }
+  nav button.active {
+    color: var(--acc);
+    background: rgba(92,255,126,0.08);
+  }
+  nav button.active::after {
+    content: '';
+    position: absolute;
+    bottom: -1px; left: 0; right: 0;
+    height: 2px;
+    background: var(--acc);
+  }
+
+  /* LAYOUT */
+  .grid { display: grid; gap: 24px; }
+  .grid-2 { grid-template-columns: 1fr 1fr; }
+  .grid-3 { grid-template-columns: repeat(3, 1fr); }
+  @media (max-width: 900px) {
+    .grid-2, .grid-3 { grid-template-columns: 1fr; }
+  }
+
+  .panel {
+    border: 1px solid var(--line);
+    background: var(--panel);
+    padding: 20px;
+    position: relative;
+  }
+  .panel h2 {
+    font-size: 11px;
+    color: var(--dim);
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px dashed var(--line);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .panel h2 .badge {
+    background: var(--acc);
+    color: var(--bg);
+    padding: 2px 8px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1px;
+  }
+
+  /* DROPZONE */
+  .dropzone {
+    border: 2px dashed var(--line);
+    padding: 48px 24px;
+    text-align: center;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    background: var(--bg-2);
+  }
+  .dropzone:hover, .dropzone.drag {
+    border-color: var(--acc);
+    background: rgba(92,255,126,0.04);
+  }
+  .dropzone-icon {
+    font-family: var(--display);
+    font-size: 56px;
+    font-weight: 700;
+    color: var(--acc);
+    margin-bottom: 12px;
+    display: block;
+    line-height: 1;
+  }
+  .dropzone strong { display: block; font-size: 14px; margin-bottom: 6px; }
+  .dropzone small { color: var(--dim); font-size: 11px; }
+
+  /* BUTTONS */
+  .btn {
+    background: transparent;
+    border: 1px solid var(--line);
+    color: var(--ink);
+    font-family: var(--mono);
+    font-size: 12px;
+    padding: 10px 18px;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    transition: all 0.15s ease;
+    text-decoration: none;
+    display: inline-block;
+  }
+  .btn:hover { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+  .btn-primary { border-color: var(--acc); color: var(--acc); }
+  .btn-primary:hover { background: var(--acc); color: var(--bg); }
+  .btn-warn { border-color: var(--warn); color: var(--warn); }
+  .btn-warn:hover { background: var(--warn); color: var(--bg); }
+  .btn-err { border-color: var(--err); color: var(--err); }
+  .btn-err:hover { background: var(--err); color: var(--bg); }
+  .btn-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+
+  /* STATS */
+  .stat {
+    padding: 16px;
+    border: 1px solid var(--line);
+    background: var(--bg-2);
+    text-align: left;
+  }
+  .stat-label {
+    font-size: 10px;
+    color: var(--dim);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 8px;
+  }
+  .stat-value {
+    font-family: var(--display);
+    font-size: 36px;
+    font-weight: 700;
+    color: var(--acc);
+    line-height: 1;
+    letter-spacing: -1px;
+  }
+  .stat-value.warn { color: var(--warn); }
+  .stat-value.err { color: var(--err); }
+  .stat-sub { font-size: 10px; color: var(--dim); margin-top: 6px; }
+
+  /* CONSOLE / LOG */
+  .console {
+    background: #050805;
+    border: 1px solid var(--line);
+    padding: 16px;
+    font-size: 11px;
+    height: 360px;
+    overflow-y: auto;
+    font-family: var(--mono);
+  }
+  .console-line {
+    padding: 2px 0;
+    display: grid;
+    grid-template-columns: 70px 80px 1fr;
+    gap: 8px;
+    border-bottom: 1px solid rgba(92,255,126,0.04);
+  }
+  .console-line .time { color: var(--dim); }
+  .console-line .lvl {
+    text-align: center;
+    padding: 0 4px;
+    font-weight: 700;
+    font-size: 10px;
+  }
+  .lvl.info { color: var(--acc); }
+  .lvl.warn { color: var(--warn); }
+  .lvl.err { color: var(--err); }
+  .lvl.ok { color: var(--ok); }
+  .lvl.scan { color: #5ce0ff; }
+
+  /* FILE LIST */
+  .file-row {
+    display: grid;
+    grid-template-columns: 1fr auto auto auto;
+    gap: 12px;
+    padding: 10px 12px;
+    border: 1px solid var(--line);
+    background: var(--bg-2);
+    margin-bottom: 6px;
+    align-items: center;
+    font-size: 11px;
+  }
+  .file-row .name { color: var(--ink); }
+  .file-row .size { color: var(--dim); }
+  .file-row .badge-status {
+    padding: 2px 8px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .b-ok { background: var(--ok); color: var(--bg); }
+  .b-warn { background: var(--warn); color: var(--bg); }
+  .b-err { background: var(--err); color: var(--bg); }
+  .b-info { background: #5ce0ff; color: var(--bg); }
+
+  /* ISSUES */
+  .issue {
+    border-left: 3px solid var(--warn);
+    padding: 12px 16px;
+    background: var(--bg-2);
+    margin-bottom: 8px;
+    font-size: 12px;
+  }
+  .issue.critical { border-left-color: var(--err); }
+  .issue.info { border-left-color: var(--acc); }
+  .issue-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+  }
+  .issue-type {
+    font-size: 10px;
+    color: var(--dim);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+  }
+  .issue-file { font-size: 11px; color: var(--ink); font-weight: 500; }
+  .issue-msg { color: var(--ink); margin: 6px 0; }
+  .issue-fix {
+    color: var(--acc);
+    font-size: 11px;
+    margin-top: 6px;
+    padding: 6px 10px;
+    background: rgba(92,255,126,0.06);
+    border: 1px dashed rgba(92,255,126,0.2);
+  }
+  .issue-fix::before { content: '→ '; }
+
+  /* CONFIG */
+  .cfg-row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px dashed var(--line);
+    align-items: center;
+  }
+  .cfg-row label {
+    font-size: 12px;
+    color: var(--ink);
+  }
+  .cfg-row .desc {
+    font-size: 10px;
+    color: var(--dim);
+    margin-top: 2px;
+  }
+  .cfg-row input[type="number"],
+  .cfg-row input[type="text"],
+  .cfg-row select {
+    background: var(--bg-2);
+    border: 1px solid var(--line);
+    color: var(--ink);
+    font-family: var(--mono);
+    font-size: 12px;
+    padding: 6px 10px;
+    width: 140px;
+  }
+  .cfg-row input:focus, .cfg-row select:focus {
+    outline: none;
+    border-color: var(--acc);
+  }
+  .toggle {
+    position: relative;
+    width: 40px;
+    height: 20px;
+    background: var(--line);
+    cursor: pointer;
+    transition: 0.2s;
+  }
+  .toggle.on { background: var(--acc); }
+  .toggle::after {
+    content: '';
+    position: absolute;
+    top: 2px; left: 2px;
+    width: 16px;
+    height: 16px;
+    background: var(--ink);
+    transition: 0.2s;
+  }
+  .toggle.on::after { left: 22px; background: var(--bg); }
+
+  /* TABS HIDDEN */
+  .tab { display: none; }
+  .tab.active { display: block; }
+
+  /* TESTS */
+  .test-row {
+    display: grid;
+    grid-template-columns: 24px 1fr auto;
+    gap: 12px;
+    padding: 10px 12px;
+    border: 1px solid var(--line);
+    background: var(--bg-2);
+    margin-bottom: 4px;
+    font-size: 11px;
+    align-items: center;
+  }
+  .test-icon {
+    width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 11px;
+  }
+  .test-icon.pass { color: var(--ok); }
+  .test-icon.fail { color: var(--err); }
+  .test-icon.pend { color: var(--dim); }
+  .test-name { color: var(--ink); }
+  .test-time { color: var(--dim); font-size: 10px; }
+
+  /* KB */
+  .kb-entry {
+    padding: 10px 12px;
+    border: 1px solid var(--line);
+    background: var(--bg-2);
+    margin-bottom: 6px;
+    font-size: 11px;
+  }
+  .kb-pattern { color: var(--acc); font-weight: 500; }
+  .kb-count {
+    float: right;
+    color: var(--dim);
+    font-size: 10px;
+  }
+  .kb-fix { color: var(--dim); font-size: 10px; margin-top: 4px; }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--line); }
+  ::-webkit-scrollbar-thumb:hover { background: var(--acc); }
+
+  /* MISC */
+  .hint {
+    font-size: 10px;
+    color: var(--dim);
+    margin-top: 8px;
+    line-height: 1.6;
+  }
+  .empty {
+    text-align: center;
+    color: var(--dim);
+    padding: 40px 20px;
+    font-size: 11px;
+  }
+  .empty::before {
+    content: '◇';
+    display: block;
+    font-size: 24px;
+    color: var(--line);
+    margin-bottom: 8px;
+  }
+  .divider {
+    height: 1px;
+    background: var(--line);
+    margin: 16px 0;
+  }
+  pre {
+    background: #050805;
+    border: 1px solid var(--line);
+    padding: 12px;
+    font-size: 10px;
+    color: var(--ink);
+    overflow-x: auto;
+    margin-top: 8px;
+    max-height: 240px;
+  }
+  .ascii {
+    font-size: 9px;
+    color: var(--dim);
+    line-height: 1.1;
+    white-space: pre;
+    user-select: none;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div>
+      <div class="logo">AURA<span>8</span></div>
+      <div class="tag">Bug Splitting Forensic Auditor</div>
+    </div>
+    <div class="ascii">    ╔══════════════════════════════════════╗
+    ║  AUTONOMOUS · OFFLINE · NO-BACKEND   ║
+    ║  v1.0.0 · MIT · BROWSER-NATIVE       ║
+    ╚══════════════════════════════════════╝</div>
+    <div class="meta">
+      <div><span><span class="status-dot"></span>SYSTEM</span><b id="sysStatus">READY</b></div>
+      <div><span>FILES SCANNED</span><b id="totalScanned">0</b></div>
+      <div><span>ISSUES FOUND</span><b id="totalIssues">0</b></div>
+      <div><span>KB ENTRIES</span><b id="kbCount">0</b></div>
+    </div>
+  </header>
+
+  <nav>
+    <button class="active" data-tab="scan">[01] SCANNER</button>
+    <button data-tab="issues">[02] INCOHÉRENCES</button>
+    <button data-tab="recovery">[03] RECOVERY</button>
+    <button data-tab="kb">[04] KNOWLEDGE BASE</button>
+    <button data-tab="config">[05] CONFIG</button>
+    <button data-tab="tests">[06] TESTS</button>
+    <button data-tab="export">[07] EXPORT/CI</button>
+  </nav>
+
+  <!-- ============ TAB SCANNER ============ -->
+  <div class="tab active" id="tab-scan">
+    <div class="grid grid-2">
+      <div class="panel">
+        <h2>Input · Drop Files <span class="badge">MULTI</span></h2>
+        <div class="dropzone" id="drop">
+          <span class="dropzone-icon">◈</span>
+          <strong>GLISSER LES FICHIERS ICI</strong>
+          <small>ou cliquer pour parcourir — texte, code, json, log, csv…</small>
+          <input type="file" id="fileInput" multiple style="display:none">
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-primary" id="btnScan">▶ LANCER L'AUDIT</button>
+          <button class="btn" id="btnClear">CLEAR</button>
+          <button class="btn" id="btnDemo">CHARGER DEMO AURA8</button>
+        </div>
+        <div class="hint">
+          L'audit détecte : fichiers trop lourds, découpages incohérents, blocs incomplets, encoding suspect, lignes anormalement longues, références orphelines, patterns de bug connus.
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Files Loaded <span class="badge" id="fileCountBadge">0</span></h2>
+        <div id="fileList"><div class="empty">aucun fichier chargé</div></div>
+      </div>
+    </div>
+
+    <div class="panel" style="margin-top:24px;">
+      <h2>Live Console <span class="badge">TRACE</span></h2>
+      <div class="console" id="console"></div>
+    </div>
+
+    <div class="grid grid-3" style="margin-top:24px;">
+      <div class="stat">
+        <div class="stat-label">Total Files</div>
+        <div class="stat-value" id="sFiles">0</div>
+        <div class="stat-sub">chargés en mémoire</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Total Bytes</div>
+        <div class="stat-value" id="sBytes">0</div>
+        <div class="stat-sub">poids cumulé</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Heavy Files</div>
+        <div class="stat-value warn" id="sHeavy">0</div>
+        <div class="stat-sub">au-dessus du seuil</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ TAB ISSUES ============ -->
+  <div class="tab" id="tab-issues">
+    <div class="grid grid-3">
+      <div class="stat">
+        <div class="stat-label">Critical</div>
+        <div class="stat-value err" id="cntCrit">0</div>
+        <div class="stat-sub">à corriger en priorité</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Warnings</div>
+        <div class="stat-value warn" id="cntWarn">0</div>
+        <div class="stat-sub">à examiner</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Info</div>
+        <div class="stat-value" id="cntInfo">0</div>
+        <div class="stat-sub">observations</div>
+      </div>
+    </div>
+
+    <div class="panel" style="margin-top:24px;">
+      <h2>Detected Incohérences <span class="badge" id="issueBadge">0</span></h2>
+      <div class="btn-row" style="margin-bottom:16px;">
+        <button class="btn btn-primary" id="btnAutoFix">⚙ AUTO-FIX SUGGÉRÉ</button>
+        <button class="btn" id="btnRefreshIssues">↻ REFRESH</button>
+        <button class="btn" id="btnExportIssues">↓ EXPORT JSON</button>
+      </div>
+      <div id="issueList"><div class="empty">aucune incohérence — lance un audit</div></div>
+    </div>
+  </div>
+
+  <!-- ============ TAB RECOVERY ============ -->
+  <div class="tab" id="tab-recovery">
+    <div class="grid grid-2">
+      <div class="panel">
+        <h2>Backups Auto <span class="badge">LOCAL</span></h2>
+        <p class="hint" style="margin-bottom:12px;">Les backups sont stockés en localStorage et téléchargeables en JSON. Aucune donnée ne quitte ton navigateur.</p>
+        <div class="btn-row">
+          <button class="btn btn-primary" id="btnBackup">＋ BACKUP MAINTENANT</button>
+          <button class="btn" id="btnExportBackups">↓ EXPORT ALL</button>
+          <button class="btn btn-err" id="btnWipeBackups">⌫ EFFACER TOUT</button>
+        </div>
+        <div id="backupList" style="margin-top:16px;"><div class="empty">aucun backup</div></div>
+      </div>
+
+      <div class="panel">
+        <h2>Force-Restore <span class="badge">EMERGENCY</span></h2>
+        <p class="hint" style="margin-bottom:12px;">Restauration d'urgence : compare l'original avec l'état courant et restaure les pertes détectées.</p>
+        <div class="cfg-row">
+          <div>
+            <label>Importer un backup .json</label>
+            <div class="desc">restaure les fichiers à partir d'un fichier exporté</div>
+          </div>
+          <input type="file" id="restoreInput" accept=".json" style="width:auto;">
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-warn" id="btnForceRestore">⚠ FORCE-RESTORE</button>
+          <button class="btn" id="btnCompare">⇆ COMPARE AVEC ORIGINAL</button>
+        </div>
+        <div id="restoreReport" style="margin-top:16px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ TAB KB ============ -->
+  <div class="tab" id="tab-kb">
+    <div class="panel">
+      <h2>Base de Connaissances <span class="badge">AUTO-LEARN</span></h2>
+      <p class="hint" style="margin-bottom:12px;">
+        Chaque pattern détecté + correction appliquée est mémorisé. Plus tu utilises l'outil, plus les suggestions deviennent précises. Stockage : localStorage.
+      </p>
+      <div class="btn-row">
+        <button class="btn btn-primary" id="btnAddKb">＋ AJOUTER UN PATTERN</button>
+        <button class="btn" id="btnExportKb">↓ EXPORT KB</button>
+        <button class="btn" id="btnImportKb">↑ IMPORT KB</button>
+        <input type="file" id="kbImportInput" accept=".json" style="display:none;">
+        <button class="btn btn-err" id="btnResetKb">⌫ RESET KB</button>
+      </div>
+      <div class="divider"></div>
+      <div id="kbList"></div>
+    </div>
+
+    <div class="panel" style="margin-top:24px;">
+      <h2>Suggestions IA (heuristiques + patterns appris) <span class="badge">BETA</span></h2>
+      <p class="hint">Les suggestions sont générées par croisement des patterns connus avec les fichiers chargés. C'est de l'heuristique déterministe, pas un LLM.</p>
+      <div id="suggestList" style="margin-top:12px;"><div class="empty">audit requis</div></div>
+    </div>
+  </div>
+
+  <!-- ============ TAB CONFIG ============ -->
+  <div class="tab" id="tab-config">
+    <div class="grid grid-2">
+      <div class="panel">
+        <h2>Seuils de Détection</h2>
+        <div class="cfg-row">
+          <div>
+            <label>Fichier "lourd" (octets)</label>
+            <div class="desc">au-dessus → flag heavy</div>
+          </div>
+          <input type="number" id="cfgHeavy" value="500000" min="1000">
+        </div>
+        <div class="cfg-row">
+          <div>
+            <label>Ligne anormale (caractères)</label>
+            <div class="desc">au-dessus → flag long-line</div>
+          </div>
+          <input type="number" id="cfgLine" value="500" min="50">
+        </div>
+        <div class="cfg-row">
+          <div>
+            <label>Nb max lignes / chunk</label>
+            <div class="desc">seuil de découpage suggéré</div>
+          </div>
+          <input type="number" id="cfgChunk" value="500" min="50">
+        </div>
+        <div class="cfg-row">
+          <div>
+            <label>Profondeur d'imbrication</label>
+            <div class="desc">au-dessus → flag deep-nesting</div>
+          </div>
+          <input type="number" id="cfgDepth" value="8" min="2">
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Options</h2>
+        <div class="cfg-row">
+          <div>
+            <label>Auto-backup avant fix</label>
+            <div class="desc">crée un snapshot avant toute correction</div>
+          </div>
+          <div class="toggle on" data-toggle="autoBackup"></div>
+        </div>
+        <div class="cfg-row">
+          <div>
+            <label>Apprentissage auto (KB)</label>
+            <div class="desc">enregistre patterns + fixes appliqués</div>
+          </div>
+          <div class="toggle on" data-toggle="autoLearn"></div>
+        </div>
+        <div class="cfg-row">
+          <div>
+            <label>Trace console détaillée</label>
+            <div class="desc">log verbose pour debug</div>
+          </div>
+          <div class="toggle on" data-toggle="verbose"></div>
+        </div>
+        <div class="cfg-row">
+          <div>
+            <label>Profil système</label>
+            <div class="desc">preset des patterns à appliquer</div>
+          </div>
+          <select id="cfgProfile">
+            <option value="generic">Generic</option>
+            <option value="aura8" selected>AURA8</option>
+            <option value="javascript">JavaScript / Node</option>
+            <option value="python">Python</option>
+            <option value="markdown">Markdown / Docs</option>
+            <option value="json">JSON / Config</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel" style="margin-top:24px;">
+      <h2>Profil AURA8 <span class="badge">PRESET</span></h2>
+      <p class="hint">Configuration spécifique pour les projets AURA8 : détection des patterns propres au framework, règles de découpage, conventions de nommage.</p>
+      <pre id="aura8Config"></pre>
+    </div>
+  </div>
+
+  <!-- ============ TAB TESTS ============ -->
+  <div class="tab" id="tab-tests">
+    <div class="panel">
+      <h2>Test Suite <span class="badge" id="testBadge">0/0</span></h2>
+      <p class="hint" style="margin-bottom:12px;">Tests réels exécutés sur les algorithmes de détection. Aucun mock, aucun bypass.</p>
+      <div class="btn-row">
+        <button class="btn btn-primary" id="btnRunTests">▶ RUN ALL TESTS</button>
+        <button class="btn" id="btnClearTests">CLEAR</button>
+      </div>
+      <div class="divider"></div>
+      <div id="testList"></div>
+      <div class="divider"></div>
+      <div class="grid grid-3">
+        <div class="stat">
+          <div class="stat-label">Passed</div>
+          <div class="stat-value" id="tPass">—</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Failed</div>
+          <div class="stat-value err" id="tFail">—</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Duration</div>
+          <div class="stat-value" id="tTime">—</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ TAB EXPORT ============ -->
+  <div class="tab" id="tab-export">
+    <div class="grid grid-2">
+      <div class="panel">
+        <h2>Export Rapport Complet</h2>
+        <p class="hint" style="margin-bottom:12px;">Génère un rapport d'audit JSON (fichiers + issues + suggestions + KB).</p>
+        <div class="btn-row">
+          <button class="btn btn-primary" id="btnExportFull">↓ AUDIT JSON</button>
+          <button class="btn" id="btnExportMd">↓ AUDIT MARKDOWN</button>
+        </div>
+      </div>
+      <div class="panel">
+        <h2>GitHub Pages Ready</h2>
+        <p class="hint" style="margin-bottom:12px;">Le fichier index.html est 100% statique. Pour déployer :</p>
+        <pre>1. Crée un repo GitHub vide
+2. git init &amp;&amp; git add index.html
+3. git commit -m "AURA8 v1.0"
+4. git push origin main
+5. Settings → Pages → Branch: main / root
+6. https://&lt;user&gt;.github.io/&lt;repo&gt;/</pre>
+      </div>
+    </div>
+    <div class="panel" style="margin-top:24px;">
+      <h2>CI / GitHub Actions <span class="badge">PRÊT</span></h2>
+      <p class="hint">Workflow .github/workflows/pages.yml suggéré :</p>
+      <pre id="ciYaml"></pre>
+      <div class="btn-row">
+        <button class="btn" id="btnCopyYaml">⧉ COPIER YAML</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+/* ============================================================
+   AURA8 · BUG SPLITTING FORENSIC AUDITOR
+   Tout fonctionne offline. Aucun appel réseau.
+   ============================================================ */
+
+const STATE = {
+  files: [],          // {id, name, size, content, hash, loadedAt}
+  issues: [],         // {id, severity, type, file, line, msg, fix}
+  backups: [],        // {id, ts, files:[{name,content,hash}]}
+  kb: [],             // {id, pattern, fix, count, lastSeen}
+  config: {
+    heavy: 500000,
+    line: 500,
+    chunk: 500,
+    depth: 8,
+    autoBackup: true,
+    autoLearn: true,
+    verbose: true,
+    profile: 'aura8'
+  },
+  testResults: []
+};
+
+const LS_KEY = 'aura8_state_v1';
+
+/* -------- PERSISTENCE -------- */
+function saveState() {
+  try {
+    const slim = {
+      backups: STATE.backups,
+      kb: STATE.kb,
+      config: STATE.config
+    };
+    localStorage.setItem(LS_KEY, JSON.stringify(slim));
+  } catch (e) { console.warn('save failed', e); }
+}
+function loadState() {
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    if (!raw) { seedKB(); return; }
+    const obj = JSON.parse(raw);
+    STATE.backups = obj.backups || [];
+    STATE.kb = obj.kb || [];
+    STATE.config = Object.assign(STATE.config, obj.config || {});
+    if (STATE.kb.length === 0) seedKB();
+  } catch (e) {
+    console.warn('load failed', e);
+    seedKB();
+  }
+}
+
+/* -------- UTIL -------- */
+function uid() { return Math.random().toString(36).slice(2, 10); }
+function now() { return new Date().toISOString(); }
+function ts() {
+  const d = new Date();
+  return [d.getHours(), d.getMinutes(), d.getSeconds()]
+    .map(n => String(n).padStart(2, '0')).join(':');
+}
+function bytes(n) {
+  if (n < 1024) return n + ' B';
+  if (n < 1024*1024) return (n/1024).toFixed(1) + ' KB';
+  return (n/1024/1024).toFixed(2) + ' MB';
+}
+// hash simple FNV-1a (déterministe, offline)
+function hash(str) {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < str.length; i++) {
+    h ^= str.charCodeAt(i);
+    h = (h * 0x01000193) >>> 0;
+  }
+  return h.toString(16).padStart(8, '0');
+}
+
+/* -------- LOG -------- */
+function log(level, msg) {
+  if (!STATE.config.verbose && level === 'info') return;
+  const el = document.getElementById('console');
+  const div = document.createElement('div');
+  div.className = 'console-line';
+  div.innerHTML = `<span class="time">${ts()}</span><span class="lvl ${level}">${level.toUpperCase()}</span><span>${msg}</span>`;
+  el.appendChild(div);
+  el.scrollTop = el.scrollHeight;
+  if (el.children.length > 500) el.removeChild(el.firstChild);
+}
+
+/* -------- KB SEED -------- */
+function seedKB() {
+  STATE.kb = [
+    { id: uid(), pattern: 'file-too-heavy', fix: 'Découper en chunks de N lignes via split logique (fonctions, sections)', count: 0, lastSeen: null },
+    { id: uid(), pattern: 'long-line', fix: 'Reformater : maximum ~120 caractères, wrap après opérateurs', count: 0, lastSeen: null },
+    { id: uid(), pattern: 'unbalanced-braces', fix: 'Compter { et } sur tout le fichier — souvent un copier/coller tronqué', count: 0, lastSeen: null },
+    { id: uid(), pattern: 'unbalanced-parens', fix: 'Vérifier ( et ) — bug fréquent en édition manuelle', count: 0, lastSeen: null },
+    { id: uid(), pattern: 'mixed-line-endings', fix: 'Normaliser en LF (Unix) — convertir CRLF → LF', count: 0, lastSeen: null },
+    { id: uid(), pattern: 'todo-fixme', fix: 'Lister tous les TODO/FIXME/XXX et créer des tickets', count: 0, lastSeen: null },
+    { id: uid(), pattern: 'deep-nesting', fix: 'Refactor : early-return, extraction de fonctions, pattern guard-clause', count: 0, lastSeen: null },
+    { id: uid(), pattern: 'trailing-whitespace', fix: 'Trim chaque ligne en fin — regex /[ \\t]+$/gm', count: 0, lastSeen: null },
+    { id: uid(), pattern: 'duplicate-block', fix: 'Détecter blocs identiques répétés → extraire en fonction', count: 0, lastSeen: null },
+    { id: uid(), pattern: 'invalid-json', fix: 'Parser JSON et reporter ligne/colonne — souvent virgule en trop', count: 0, lastSeen: null },
+    { id: uid(), pattern: 'aura8-split-incoherent', fix: '[AURA8] Découpage non-aligné sur les sections @section — réaligner', count: 0, lastSeen: null }
+  ];
+  saveState();
+}
+
+/* -------- DETECTION ENGINE -------- */
+const DETECTORS = {
+
+  heavy(file, cfg) {
+    if (file.size > cfg.heavy) {
+      return [{
+        severity: 'warn',
+        type: 'file-too-heavy',
+        file: file.name,
+        line: 0,
+        msg: `Fichier ${bytes(file.size)} > seuil ${bytes(cfg.heavy)}`,
+        fix: `Découper en chunks d'environ ${cfg.chunk} lignes selon les frontières logiques`
+      }];
+    }
+    return [];
+  },
+
+  longLines(file, cfg) {
+    const out = [];
+    const lines = file.content.split('\n');
+    lines.forEach((l, i) => {
+      if (l.length > cfg.line) {
+        out.push({
+          severity: 'info',
+          type: 'long-line',
+          file: file.name,
+          line: i + 1,
+          msg: `Ligne ${i+1} : ${l.length} caractères`,
+          fix: 'Reformater (wrap ~120 chars)'
+        });
+      }
+    });
+    return out.slice(0, 10); // cap pour pas inonder
+  },
+
+  braces(file) {
+    const out = [];
+    const counts = { '{': 0, '}': 0, '(': 0, ')': 0, '[': 0, ']': 0 };
+    let inStr = false, strCh = '';
+    for (let i = 0; i < file.content.length; i++) {
+      const c = file.content[i];
+      if (inStr) {
+        if (c === strCh && file.content[i-1] !== '\\') inStr = false;
+        continue;
+      }
+      if (c === '"' || c === "'" || c === '`') { inStr = true; strCh = c; continue; }
+      if (counts[c] !== undefined) counts[c]++;
+    }
+    if (counts['{'] !== counts['}']) {
+      out.push({
+        severity: 'critical',
+        type: 'unbalanced-braces',
+        file: file.name, line: 0,
+        msg: `Accolades déséquilibrées : ${counts['{']} ouvrantes vs ${counts['}']} fermantes`,
+        fix: 'Repérer le bloc tronqué — souvent fichier coupé pendant édition'
+      });
+    }
+    if (counts['('] !== counts[')']) {
+      out.push({
+        severity: 'critical',
+        type: 'unbalanced-parens',
+        file: file.name, line: 0,
+        msg: `Parenthèses déséquilibrées : ${counts['(']} vs ${counts[')']}`,
+        fix: 'Vérifier appels de fonction tronqués'
+      });
+    }
+    if (counts['['] !== counts[']']) {
+      out.push({
+        severity: 'critical',
+        type: 'unbalanced-brackets',
+        file: file.name, line: 0,
+        msg: `Crochets déséquilibrés : ${counts['[']} vs ${counts[']']}`,
+        fix: 'Vérifier tableaux tronqués'
+      });
+    }
+    return out;
+  },
+
+  lineEndings(file) {
+    const crlf = (file.content.match(/\r\n/g) || []).length;
+    const lf = (file.content.match(/(?<!\r)\n/g) || []).length;
+    if (crlf > 0 && lf > 0) {
+      return [{
+        severity: 'warn',
+        type: 'mixed-line-endings',
+        file: file.name, line: 0,
+        msg: `Fins de ligne mixtes : ${crlf} CRLF + ${lf} LF`,
+        fix: 'Normaliser tout en LF (Unix)'
+      }];
+    }
+    return [];
+  },
+
+  todos(file) {
+    const re = /\b(TODO|FIXME|XXX|HACK)\b[:\s]*(.{0,80})/gi;
+    const out = [];
+    let m, lineNo;
+    file.content.split('\n').forEach((line, idx) => {
+      const r = /\b(TODO|FIXME|XXX|HACK)\b[:\s]*(.{0,80})/i;
+      const match = line.match(r);
+      if (match) {
+        out.push({
+          severity: 'info',
+          type: 'todo-fixme',
+          file: file.name,
+          line: idx + 1,
+          msg: `${match[1]} : ${(match[2] || '').trim()}`,
+          fix: 'Convertir en ticket ou résoudre'
+        });
+      }
+    });
+    return out.slice(0, 20);
+  },
+
+  trailingWS(file) {
+    const lines = file.content.split('\n');
+    let count = 0;
+    lines.forEach(l => { if (/[ \t]+$/.test(l)) count++; });
+    if (count > 0) {
+      return [{
+        severity: 'info',
+        type: 'trailing-whitespace',
+        file: file.name, line: 0,
+        msg: `${count} ligne(s) avec whitespace en fin`,
+        fix: 'Trim : sed -i "s/[ \\t]*$//" file'
+      }];
+    }
+    return [];
+  },
+
+  nesting(file, cfg) {
+    const out = [];
+    const lines = file.content.split('\n');
+    let depth = 0, maxDepth = 0, maxLine = 0;
+    lines.forEach((l, i) => {
+      const opens = (l.match(/\{/g) || []).length;
+      const closes = (l.match(/\}/g) || []).length;
+      depth += opens - closes;
+      if (depth > maxDepth) { maxDepth = depth; maxLine = i + 1; }
+    });
+    if (maxDepth > cfg.depth) {
+      out.push({
+        severity: 'warn',
+        type: 'deep-nesting',
+        file: file.name,
+        line: maxLine,
+        msg: `Profondeur ${maxDepth} > seuil ${cfg.depth} (ligne ${maxLine})`,
+        fix: 'Refactor : early-return, extract function'
+      });
+    }
+    return out;
+  },
+
+  jsonValid(file) {
+    if (!/\.json$/i.test(file.name)) return [];
+    try {
+      JSON.parse(file.content);
+      return [];
+    } catch (e) {
+      const m = e.message.match(/position (\d+)/);
+      let line = 0;
+      if (m) {
+        const pos = parseInt(m[1]);
+        line = file.content.substring(0, pos).split('\n').length;
+      }
+      return [{
+        severity: 'critical',
+        type: 'invalid-json',
+        file: file.name,
+        line,
+        msg: `JSON invalide : ${e.message}`,
+        fix: 'Vérifier virgule trailing, guillemets manquants'
+      }];
+    }
+  },
+
+  duplicateBlocks(file) {
+    // Garde uniquement les lignes non-vides pour la comparaison
+    const allLines = file.content.split('\n');
+    const lines = allLines.map(l => l.trim()).filter(l => l.length > 0);
+    if (lines.length < 10) return [];
+    const out = [];
+    const W = 5; // taille fenêtre
+    const seen = new Map();
+    for (let i = 0; i <= lines.length - W; i++) {
+      const block = lines.slice(i, i + W);
+      const key = block.join('\n');
+      if (key.length < 30) continue;
+      if (seen.has(key)) {
+        seen.get(key).push(i + 1);
+      } else {
+        seen.set(key, [i + 1]);
+      }
+    }
+    let found = 0;
+    for (const [k, locs] of seen) {
+      if (locs.length > 1 && found < 5) {
+        out.push({
+          severity: 'info',
+          type: 'duplicate-block',
+          file: file.name,
+          line: locs[0],
+          msg: `Bloc de ${W} lignes dupliqué ${locs.length}× (lignes ${locs.join(', ')})`,
+          fix: 'Extraire en fonction commune'
+        });
+        found++;
+      }
+    }
+    return out;
+  },
+
+  aura8Split(file) {
+    // Détecte un découpage incohérent dans les fichiers AURA8
+    // Heuristique : commentaires de section @section attendus tous les ~N lignes
+    if (STATE.config.profile !== 'aura8') return [];
+    const lines = file.content.split('\n');
+    const sectionLines = [];
+    lines.forEach((l, i) => {
+      if (/@section\b|@AURA8\b|\/\* ===.*=== \*\//.test(l)) sectionLines.push(i + 1);
+    });
+    if (lines.length > 200 && sectionLines.length === 0) {
+      return [{
+        severity: 'warn',
+        type: 'aura8-split-incoherent',
+        file: file.name, line: 0,
+        msg: `Fichier AURA8 de ${lines.length} lignes sans marqueurs @section`,
+        fix: 'Ajouter des marqueurs // @section NAME pour découpage logique'
+      }];
+    }
+    if (sectionLines.length > 1) {
+      // gaps anormaux entre sections
+      const gaps = [];
+      for (let i = 1; i < sectionLines.length; i++) {
+        gaps.push(sectionLines[i] - sectionLines[i-1]);
+      }
+      const max = Math.max(...gaps);
+      const min = Math.min(...gaps);
+      if (max > min * 5 && max > 200) {
+        return [{
+          severity: 'info',
+          type: 'aura8-split-incoherent',
+          file: file.name,
+          line: sectionLines[gaps.indexOf(max) + 1],
+          msg: `Gap incohérent entre sections : min ${min} / max ${max} lignes`,
+          fix: 'Découper les sections plus longues'
+        }];
+      }
+    }
+    return [];
+  },
+
+  orphanRef(file) {
+    // import / require pointant vers un fichier non chargé
+    const out = [];
+    const re = /(?:import\s+.*?from\s+|require\s*\(\s*)['"]([^'"]+)['"]/g;
+    let m;
+    const loaded = new Set(STATE.files.map(f => f.name.replace(/\.\w+$/, '')));
+    let count = 0;
+    while ((m = re.exec(file.content)) !== null && count < 5) {
+      const ref = m[1];
+      if (ref.startsWith('.')) {
+        const base = ref.split('/').pop().replace(/\.\w+$/, '');
+        if (!loaded.has(base)) {
+          const line = file.content.substring(0, m.index).split('\n').length;
+          out.push({
+            severity: 'info',
+            type: 'orphan-ref',
+            file: file.name, line,
+            msg: `Référence locale "${ref}" — fichier non chargé`,
+            fix: 'Charger le fichier référencé pour audit complet'
+          });
+          count++;
+        }
+      }
+    }
+    return out;
+  }
+};
+
+function runAudit() {
+  log('scan', `=== AUDIT LANCÉ · ${STATE.files.length} fichier(s) ===`);
+  if (STATE.files.length === 0) { log('warn', 'Aucun fichier à auditer'); return; }
+  if (STATE.config.autoBackup) {
+    createBackup('auto-pre-audit');
+    log('ok', 'Backup auto créé avant audit');
+  }
+  STATE.issues = [];
+  const t0 = performance.now();
+  STATE.files.forEach(f => {
+    log('info', `→ scan ${f.name} (${bytes(f.size)})`);
+    Object.entries(DETECTORS).forEach(([name, fn]) => {
+      try {
+        const found = fn(f, STATE.config) || [];
+        found.forEach(iss => {
+          iss.id = uid();
+          STATE.issues.push(iss);
+          if (STATE.config.autoLearn) learnPattern(iss.type, iss.fix);
+        });
+        if (found.length > 0) log('info', `  · ${name} → ${found.length} issue(s)`);
+      } catch (e) {
+        log('err', `detector ${name} crashed : ${e.message}`);
+      }
+    });
+  });
+  const dt = (performance.now() - t0).toFixed(0);
+  log('ok', `=== AUDIT TERMINÉ en ${dt}ms · ${STATE.issues.length} incohérence(s) ===`);
+  saveState();
+  renderAll();
+}
+
+/* -------- LEARN -------- */
+function learnPattern(type, fix) {
+  let entry = STATE.kb.find(k => k.pattern === type);
+  if (!entry) {
+    entry = { id: uid(), pattern: type, fix, count: 0, lastSeen: null };
+    STATE.kb.push(entry);
+  }
+  entry.count = (entry.count || 0) + 1;
+  entry.lastSeen = now();
+}
+
+/* -------- BACKUP -------- */
+function createBackup(label) {
+  const bk = {
+    id: uid(),
+    ts: now(),
+    label: label || 'manual',
+    files: STATE.files.map(f => ({ name: f.name, content: f.content, hash: f.hash, size: f.size }))
+  };
+  STATE.backups.unshift(bk);
+  STATE.backups = STATE.backups.slice(0, 20); // cap
+  saveState();
+  renderBackups();
+  return bk;
+}
+
+function restoreFromBackup(id) {
+  const bk = STATE.backups.find(b => b.id === id);
+  if (!bk) return false;
+  STATE.files = bk.files.map(f => ({
+    id: uid(),
+    name: f.name,
+    content: f.content,
+    hash: f.hash,
+    size: f.size,
+    loadedAt: now()
+  }));
+  log('ok', `Restauré ${bk.files.length} fichier(s) depuis backup ${bk.id}`);
+  renderAll();
+  return true;
+}
+
+function compareWithBackup() {
+  if (STATE.backups.length === 0) {
+    document.getElementById('restoreReport').innerHTML = '<div class="issue">Aucun backup à comparer.</div>';
+    return;
+  }
+  const bk = STATE.backups[0];
+  const html = [];
+  html.push(`<div class="hint">Comparaison avec backup le plus récent (${bk.ts}, ${bk.files.length} fichiers) :</div>`);
+  const bkMap = new Map(bk.files.map(f => [f.name, f]));
+  const curMap = new Map(STATE.files.map(f => [f.name, f]));
+  // perdus
+  for (const [name, bf] of bkMap) {
+    if (!curMap.has(name)) {
+      html.push(`<div class="issue critical"><div class="issue-head"><span class="issue-type">PERDU</span><span class="issue-file">${name}</span></div><div class="issue-msg">Présent dans backup, absent en courant</div></div>`);
+    }
+  }
+  // modifiés
+  for (const [name, cf] of curMap) {
+    const bf = bkMap.get(name);
+    if (bf && bf.hash !== cf.hash) {
+      const diff = cf.size - bf.size;
+      html.push(`<div class="issue"><div class="issue-head"><span class="issue-type">MODIFIÉ</span><span class="issue-file">${name}</span></div><div class="issue-msg">Hash diffère · taille ${diff > 0 ? '+' : ''}${diff} octets</div></div>`);
+    }
+  }
+  // nouveaux
+  for (const [name, cf] of curMap) {
+    if (!bkMap.has(name)) {
+      html.push(`<div class="issue info"><div class="issue-head"><span class="issue-type">NOUVEAU</span><span class="issue-file">${name}</span></div><div class="issue-msg">Absent du backup</div></div>`);
+    }
+  }
+  if (html.length === 1) html.push('<div class="empty">aucune divergence</div>');
+  document.getElementById('restoreReport').innerHTML = html.join('');
+}
+
+/* -------- RENDERING -------- */
+function renderAll() {
+  renderFiles();
+  renderIssues();
+  renderBackups();
+  renderKB();
+  renderSuggestions();
+  renderStats();
+}
+
+function renderFiles() {
+  const el = document.getElementById('fileList');
+  const badge = document.getElementById('fileCountBadge');
+  badge.textContent = STATE.files.length;
+  if (STATE.files.length === 0) {
+    el.innerHTML = '<div class="empty">aucun fichier chargé</div>';
+    return;
+  }
+  el.innerHTML = STATE.files.map(f => {
+    const heavy = f.size > STATE.config.heavy;
+    return `<div class="file-row">
+      <span class="name">${f.name}</span>
+      <span class="size">${bytes(f.size)}</span>
+      <span class="size">#${f.hash}</span>
+      <span class="badge-status ${heavy ? 'b-warn' : 'b-ok'}">${heavy ? 'HEAVY' : 'OK'}</span>
+    </div>`;
+  }).join('');
+}
+
+function renderIssues() {
+  const el = document.getElementById('issueList');
+  document.getElementById('issueBadge').textContent = STATE.issues.length;
+  const crit = STATE.issues.filter(i => i.severity === 'critical').length;
+  const warn = STATE.issues.filter(i => i.severity === 'warn').length;
+  const info = STATE.issues.filter(i => i.severity === 'info').length;
+  document.getElementById('cntCrit').textContent = crit;
+  document.getElementById('cntWarn').textContent = warn;
+  document.getElementById('cntInfo').textContent = info;
+  document.getElementById('totalIssues').textContent = STATE.issues.length;
+  if (STATE.issues.length === 0) {
+    el.innerHTML = '<div class="empty">aucune incohérence — lance un audit</div>';
+    return;
+  }
+  const sorted = [...STATE.issues].sort((a, b) => {
+    const order = { critical: 0, warn: 1, info: 2 };
+    return order[a.severity] - order[b.severity];
+  });
+  el.innerHTML = sorted.map(i => `
+    <div class="issue ${i.severity === 'critical' ? 'critical' : i.severity === 'info' ? 'info' : ''}">
+      <div class="issue-head">
+        <span class="issue-type">[${i.severity.toUpperCase()}] ${i.type}</span>
+        <span class="issue-file">${i.file}${i.line ? ' : L' + i.line : ''}</span>
+      </div>
+      <div class="issue-msg">${i.msg}</div>
+      <div class="issue-fix">${i.fix}</div>
+    </div>
+  `).join('');
+}
+
+function renderBackups() {
+  const el = document.getElementById('backupList');
+  if (STATE.backups.length === 0) {
+    el.innerHTML = '<div class="empty">aucun backup</div>';
+    return;
+  }
+  el.innerHTML = STATE.backups.map(b => `
+    <div class="file-row">
+      <span class="name">${b.label} · ${b.files.length} fichiers</span>
+      <span class="size">${b.ts.replace('T', ' ').slice(0, 19)}</span>
+      <span class="size">#${b.id}</span>
+      <span>
+        <button class="btn" style="padding:4px 10px;font-size:10px;" onclick="restoreFromBackup('${b.id}')">RESTORE</button>
+      </span>
+    </div>
+  `).join('');
+}
+
+function renderKB() {
+  const el = document.getElementById('kbList');
+  document.getElementById('kbCount').textContent = STATE.kb.length;
+  if (STATE.kb.length === 0) {
+    el.innerHTML = '<div class="empty">base vide</div>';
+    return;
+  }
+  const sorted = [...STATE.kb].sort((a, b) => (b.count || 0) - (a.count || 0));
+  el.innerHTML = sorted.map(k => `
+    <div class="kb-entry">
+      <span class="kb-count">×${k.count || 0} ${k.lastSeen ? '· ' + k.lastSeen.slice(0,10) : ''}</span>
+      <span class="kb-pattern">${k.pattern}</span>
+      <div class="kb-fix">→ ${k.fix}</div>
+    </div>
+  `).join('');
+}
+
+function renderSuggestions() {
+  const el = document.getElementById('suggestList');
+  if (STATE.issues.length === 0) {
+    el.innerHTML = '<div class="empty">audit requis</div>';
+    return;
+  }
+  // group by file
+  const byFile = {};
+  STATE.issues.forEach(i => {
+    if (!byFile[i.file]) byFile[i.file] = [];
+    byFile[i.file].push(i);
+  });
+  const out = [];
+  for (const [fname, issues] of Object.entries(byFile)) {
+    const types = [...new Set(issues.map(i => i.type))];
+    const kbMatch = STATE.kb.filter(k => types.includes(k.pattern));
+    out.push(`<div class="issue info">
+      <div class="issue-head"><span class="issue-type">SUGGESTIONS</span><span class="issue-file">${fname}</span></div>
+      <div class="issue-msg">${issues.length} incohérence(s) · ${types.length} pattern(s) connu(s)</div>
+      ${kbMatch.map(k => `<div class="issue-fix">${k.pattern} → ${k.fix}</div>`).join('')}
+    </div>`);
+  }
+  el.innerHTML = out.join('');
+}
+
+function renderStats() {
+  document.getElementById('sFiles').textContent = STATE.files.length;
+  document.getElementById('sBytes').textContent = bytes(STATE.files.reduce((s, f) => s + f.size, 0));
+  document.getElementById('sHeavy').textContent = STATE.files.filter(f => f.size > STATE.config.heavy).length;
+  document.getElementById('totalScanned').textContent = STATE.files.length;
+}
+
+/* -------- FILE LOADING -------- */
+function loadFile(file) {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const content = e.target.result;
+      const obj = {
+        id: uid(),
+        name: file.name,
+        content,
+        size: file.size,
+        hash: hash(content),
+        loadedAt: now()
+      };
+      STATE.files.push(obj);
+      log('ok', `Chargé ${file.name} · ${bytes(file.size)} · #${obj.hash}`);
+      resolve(obj);
+    };
+    reader.onerror = () => { log('err', `Échec chargement ${file.name}`); resolve(null); };
+    reader.readAsText(file);
+  });
+}
+
+async function handleFiles(fileList) {
+  for (const f of fileList) {
+    if (f.size > 10 * 1024 * 1024) {
+      log('warn', `${f.name} > 10MB ignoré (limite navigateur)`);
+      continue;
+    }
+    await loadFile(f);
+  }
+  renderAll();
+}
+
+/* -------- DEMO -------- */
+function loadDemo() {
+  const demos = [
+    {
+      name: 'aura8-core.js',
+      content: `// @AURA8 core module
+// @section INIT
+function initAura8(config) {
+  if (config.mode === 'strict') {
+    if (config.debug) {
+      if (config.verbose) {
+        if (config.deep) {
+          if (config.deeper) {
+            if (config.even.more) {
+              if (config.too.much) {
+                if (config.cant.stop) {
+                  console.log('too deep');
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  return config;
+}
+
+// @section RUN
+function runAura8() {
+  const a = "long line that goes on and on and on and on and on and on and on and on and on and on and on and on and on and on and on and on and on and on and on and on and on and on and on and on";
+  // TODO: refactor this duplicate block
+  const x = 1;
+  const y = 2;
+  const z = 3;
+  const w = 4;
+  
+  const x2 = 1;
+  const y2 = 2;
+  const z2 = 3;
+  const w2 = 4;
+  return x + y + z + w;
+}
+
+function brokenFunc() {
+  if (true) {
+    console.log("brace missing below");
+  // FIXME: closing brace forgotten
+`,
+      size: 0
+    },
+    {
+      name: 'config.json',
+      content: `{
+  "name": "AURA8",
+  "version": "1.0.0",
+  "modules": ["core", "audit", "recovery",],
+  "debug": true
+}`,
+      size: 0
+    },
+    {
+      name: 'huge-log.txt',
+      content: 'INFO ' + 'lorem ipsum dolor sit amet '.repeat(10000) + '\n'
+    }
+  ];
+  demos.forEach(d => {
+    d.size = new Blob([d.content]).size;
+    const obj = {
+      id: uid(),
+      name: d.name,
+      content: d.content,
+      size: d.size,
+      hash: hash(d.content),
+      loadedAt: now()
+    };
+    STATE.files.push(obj);
+    log('ok', `Demo chargé : ${d.name}`);
+  });
+  renderAll();
+}
+
+/* -------- AUTO-FIX -------- */
+function autoFix() {
+  if (STATE.issues.length === 0) { log('warn', 'Aucune issue à corriger'); return; }
+  if (STATE.config.autoBackup) {
+    createBackup('auto-pre-fix');
+    log('ok', 'Backup créé avant auto-fix');
+  }
+  let fixed = 0;
+  STATE.files.forEach(f => {
+    const fileIssues = STATE.issues.filter(i => i.file === f.name);
+    let content = f.content;
+    let changed = false;
+    fileIssues.forEach(iss => {
+      if (iss.type === 'mixed-line-endings') {
+        content = content.replace(/\r\n/g, '\n');
+        log('ok', `${f.name} : line-endings normalisés en LF`);
+        fixed++; changed = true;
+      }
+      if (iss.type === 'trailing-whitespace') {
+        content = content.replace(/[ \t]+$/gm, '');
+        log('ok', `${f.name} : trailing-ws supprimés`);
+        fixed++; changed = true;
+      }
+    });
+    if (changed) {
+      f.content = content;
+      f.size = new Blob([content]).size;
+      f.hash = hash(content);
+    }
+  });
+  log('ok', `Auto-fix terminé : ${fixed} correction(s) appliquée(s)`);
+  log('warn', 'Les autres issues nécessitent une intervention manuelle (logique métier)');
+  runAudit();
+}
+
+/* -------- EXPORT -------- */
+function download(filename, content, mime) {
+  const blob = new Blob([content], { type: mime || 'application/octet-stream' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+}
+
+function exportFullAudit() {
+  const report = {
+    generated: now(),
+    config: STATE.config,
+    files: STATE.files.map(f => ({ name: f.name, size: f.size, hash: f.hash })),
+    issues: STATE.issues,
+    kb: STATE.kb,
+    stats: {
+      totalFiles: STATE.files.length,
+      totalIssues: STATE.issues.length,
+      bySeverity: {
+        critical: STATE.issues.filter(i => i.severity === 'critical').length,
+        warn: STATE.issues.filter(i => i.severity === 'warn').length,
+        info: STATE.issues.filter(i => i.severity === 'info').length
+      }
+    }
+  };
+  download(`aura8-audit-${Date.now()}.json`, JSON.stringify(report, null, 2), 'application/json');
+}
+
+function exportMarkdown() {
+  const lines = [];
+  lines.push(`# AURA8 Audit Report`);
+  lines.push(`\nGenerated: ${now()}\n`);
+  lines.push(`## Summary`);
+  lines.push(`- Files: ${STATE.files.length}`);
+  lines.push(`- Issues: ${STATE.issues.length}`);
+  lines.push(`\n## Files`);
+  STATE.files.forEach(f => lines.push(`- \`${f.name}\` · ${bytes(f.size)} · #${f.hash}`));
+  lines.push(`\n## Issues`);
+  STATE.issues.forEach(i => {
+    lines.push(`\n### [${i.severity.toUpperCase()}] ${i.type} — \`${i.file}\`${i.line ? ':L' + i.line : ''}`);
+    lines.push(`> ${i.msg}`);
+    lines.push(`\n**Fix:** ${i.fix}`);
+  });
+  download(`aura8-audit-${Date.now()}.md`, lines.join('\n'), 'text/markdown');
+}
+
+/* -------- TESTS -------- */
+const TESTS = [
+  {
+    name: 'hash : déterministe pour même input',
+    fn: () => {
+      const a = hash('hello world');
+      const b = hash('hello world');
+      if (a !== b) throw new Error(`hashes diffèrent: ${a} vs ${b}`);
+    }
+  },
+  {
+    name: 'hash : différent pour inputs différents',
+    fn: () => {
+      const a = hash('hello');
+      const b = hash('world');
+      if (a === b) throw new Error('collision triviale');
+    }
+  },
+  {
+    name: 'detector heavy : flag fichier > seuil',
+    fn: () => {
+      const file = { name: 't.txt', size: 1000000, content: 'x'.repeat(1000000) };
+      const r = DETECTORS.heavy(file, { heavy: 500000 });
+      if (r.length !== 1) throw new Error(`expected 1 issue, got ${r.length}`);
+      if (r[0].severity !== 'warn') throw new Error('severity attendue: warn');
+    }
+  },
+  {
+    name: 'detector heavy : ne flag pas fichier sous seuil',
+    fn: () => {
+      const file = { name: 't.txt', size: 100, content: 'x' };
+      const r = DETECTORS.heavy(file, { heavy: 500000 });
+      if (r.length !== 0) throw new Error('faux positif');
+    }
+  },
+  {
+    name: 'detector braces : détecte déséquilibre',
+    fn: () => {
+      const file = { name: 't.js', content: 'function a() { if (x) {' };
+      const r = DETECTORS.braces(file);
+      if (!r.find(i => i.type === 'unbalanced-braces')) throw new Error('non détecté');
+    }
+  },
+  {
+    name: 'detector braces : ignore les chaînes',
+    fn: () => {
+      const file = { name: 't.js', content: 'const s = "{{{"; function a() { return s; }' };
+      const r = DETECTORS.braces(file);
+      const unbalanced = r.find(i => i.type === 'unbalanced-braces');
+      if (unbalanced) throw new Error('faux positif sur chaîne');
+    }
+  },
+  {
+    name: 'detector json : invalide détecté',
+    fn: () => {
+      const file = { name: 'c.json', content: '{"a": 1,}' };
+      const r = DETECTORS.jsonValid(file);
+      if (r.length !== 1) throw new Error('json invalide non détecté');
+    }
+  },
+  {
+    name: 'detector json : valide passe',
+    fn: () => {
+      const file = { name: 'c.json', content: '{"a": 1}' };
+      const r = DETECTORS.jsonValid(file);
+      if (r.length !== 0) throw new Error('faux positif json valide');
+    }
+  },
+  {
+    name: 'detector json : ignore non-json',
+    fn: () => {
+      const file = { name: 'c.txt', content: 'not json {' };
+      const r = DETECTORS.jsonValid(file);
+      if (r.length !== 0) throw new Error('json detector déclenché sur .txt');
+    }
+  },
+  {
+    name: 'detector long-lines : compte les lignes longues',
+    fn: () => {
+      const file = { name: 't.js', content: 'short\n' + 'x'.repeat(600) + '\nshort' };
+      const r = DETECTORS.longLines(file, { line: 500 });
+      if (r.length !== 1) throw new Error(`expected 1, got ${r.length}`);
+    }
+  },
+  {
+    name: 'detector line-endings : détecte mix CRLF/LF',
+    fn: () => {
+      const file = { name: 't.txt', content: 'a\r\nb\nc\r\n' };
+      const r = DETECTORS.lineEndings(file);
+      if (r.length !== 1) throw new Error('mix non détecté');
+    }
+  },
+  {
+    name: 'detector todos : capture TODO et FIXME',
+    fn: () => {
+      const file = { name: 't.js', content: '// TODO: refactor\nconst x = 1;\n// FIXME: bug ici' };
+      const r = DETECTORS.todos(file);
+      if (r.length !== 2) throw new Error(`expected 2, got ${r.length}`);
+    }
+  },
+  {
+    name: 'detector trailing-ws : détecte espaces en fin',
+    fn: () => {
+      const file = { name: 't.txt', content: 'line   \nother' };
+      const r = DETECTORS.trailingWS(file);
+      if (r.length !== 1) throw new Error('trailing non détecté');
+    }
+  },
+  {
+    name: 'detector nesting : flag profondeur excessive',
+    fn: () => {
+      const file = { name: 't.js', content: '{\n{\n{\n{\n{\n{\n{\n{\n{\nx\n}\n}\n}\n}\n}\n}\n}\n}\n}' };
+      const r = DETECTORS.nesting(file, { depth: 5 });
+      if (r.length !== 1) throw new Error('nesting non détecté');
+    }
+  },
+  {
+    name: 'detector duplicate : détecte blocs identiques',
+    fn: () => {
+      const block = ['const x = 1;', 'const y = 2;', 'const z = 3;', 'console.log(x);', 'return x;'].join('\n');
+      const content = block + '\n\nfunction sep() {}\n\n' + block;
+      const file = { name: 't.js', content };
+      const r = DETECTORS.duplicateBlocks(file);
+      if (r.length === 0) throw new Error('duplicate non détecté');
+    }
+  },
+  {
+    name: 'backup : créer + restore',
+    fn: () => {
+      const before = STATE.files.slice();
+      STATE.files = [{ id: 'x', name: 'a.txt', content: 'hello', size: 5, hash: hash('hello') }];
+      const bk = createBackup('test');
+      STATE.files = [];
+      restoreFromBackup(bk.id);
+      if (STATE.files.length !== 1 || STATE.files[0].name !== 'a.txt') {
+        STATE.files = before;
+        throw new Error('restore failed');
+      }
+      STATE.files = before;
+      STATE.backups = STATE.backups.filter(b => b.label !== 'test');
+    }
+  },
+  {
+    name: 'KB : learn incrémente le compteur',
+    fn: () => {
+      const initial = STATE.kb.find(k => k.pattern === 'test-pattern');
+      const initCount = initial ? initial.count : 0;
+      learnPattern('test-pattern', 'fix');
+      learnPattern('test-pattern', 'fix');
+      const after = STATE.kb.find(k => k.pattern === 'test-pattern');
+      if (after.count !== initCount + 2) {
+        throw new Error(`count expected ${initCount + 2}, got ${after.count}`);
+      }
+      STATE.kb = STATE.kb.filter(k => k.pattern !== 'test-pattern');
+    }
+  },
+  {
+    name: 'bytes formatter : conversions',
+    fn: () => {
+      if (bytes(500) !== '500 B') throw new Error('B fail');
+      if (bytes(2048) !== '2.0 KB') throw new Error('KB fail');
+      if (bytes(2097152) !== '2.00 MB') throw new Error('MB fail');
+    }
+  },
+  {
+    name: 'persistence : save + load roundtrip',
+    fn: () => {
+      const backup = localStorage.getItem(LS_KEY);
+      const testKb = [{ id: 'tx', pattern: 'persist-test', fix: 'x', count: 7 }];
+      const origKb = STATE.kb;
+      STATE.kb = testKb;
+      saveState();
+      STATE.kb = [];
+      loadState();
+      const found = STATE.kb.find(k => k.pattern === 'persist-test');
+      STATE.kb = origKb;
+      if (backup) localStorage.setItem(LS_KEY, backup);
+      saveState();
+      if (!found || found.count !== 7) throw new Error('roundtrip failed');
+    }
+  },
+  {
+    name: 'detector aura8-split : flag fichier sans @section',
+    fn: () => {
+      const origProfile = STATE.config.profile;
+      STATE.config.profile = 'aura8';
+      const file = { name: 'big.js', content: 'a\n'.repeat(300) };
+      const r = DETECTORS.aura8Split(file);
+      STATE.config.profile = origProfile;
+      if (r.length !== 1) throw new Error('aura8 split non détecté');
+    }
+  }
+];
+
+function runTests() {
+  const t0 = performance.now();
+  const list = document.getElementById('testList');
+  list.innerHTML = '';
+  let pass = 0, fail = 0;
+  STATE.testResults = [];
+  TESTS.forEach((t, i) => {
+    const row = document.createElement('div');
+    row.className = 'test-row';
+    let status, icon, dur;
+    const tStart = performance.now();
+    try {
+      t.fn();
+      status = 'pass'; icon = '✓';
+      pass++;
+    } catch (e) {
+      status = 'fail'; icon = '✗';
+      fail++;
+      STATE.testResults.push({ name: t.name, error: e.message });
+    }
+    dur = (performance.now() - tStart).toFixed(2) + 'ms';
+    row.innerHTML = `
+      <div class="test-icon ${status}">${icon}</div>
+      <div class="test-name">${t.name}${status === 'fail' ? ' — <span style="color:var(--err)">' + (STATE.testResults[STATE.testResults.length - 1].error) + '</span>' : ''}</div>
+      <div class="test-time">${dur}</div>`;
+    list.appendChild(row);
+  });
+  const total = (performance.now() - t0).toFixed(0);
+  document.getElementById('tPass').textContent = pass;
+  document.getElementById('tFail').textContent = fail;
+  document.getElementById('tTime').textContent = total + 'ms';
+  document.getElementById('testBadge').textContent = `${pass}/${TESTS.length}`;
+  log(fail === 0 ? 'ok' : 'err', `Tests : ${pass}/${TESTS.length} en ${total}ms`);
+}
+
+/* -------- NAV -------- */
+document.querySelectorAll('nav button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+  });
+});
+
+/* -------- DROPZONE -------- */
+const dz = document.getElementById('drop');
+const fi = document.getElementById('fileInput');
+dz.addEventListener('click', () => fi.click());
+dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag'); });
+dz.addEventListener('dragleave', () => dz.classList.remove('drag'));
+dz.addEventListener('drop', e => {
+  e.preventDefault();
+  dz.classList.remove('drag');
+  handleFiles(e.dataTransfer.files);
+});
+fi.addEventListener('change', e => handleFiles(e.target.files));
+
+/* -------- BUTTONS -------- */
+document.getElementById('btnScan').addEventListener('click', runAudit);
+document.getElementById('btnClear').addEventListener('click', () => {
+  STATE.files = []; STATE.issues = [];
+  log('warn', 'Fichiers et issues effacés');
+  renderAll();
+});
+document.getElementById('btnDemo').addEventListener('click', loadDemo);
+document.getElementById('btnAutoFix').addEventListener('click', autoFix);
+document.getElementById('btnRefreshIssues').addEventListener('click', renderIssues);
+document.getElementById('btnExportIssues').addEventListener('click', () => {
+  download(`aura8-issues-${Date.now()}.json`, JSON.stringify(STATE.issues, null, 2), 'application/json');
+});
+document.getElementById('btnBackup').addEventListener('click', () => {
+  createBackup('manual');
+  log('ok', 'Backup manuel créé');
+});
+document.getElementById('btnExportBackups').addEventListener('click', () => {
+  download(`aura8-backups-${Date.now()}.json`, JSON.stringify(STATE.backups, null, 2), 'application/json');
+});
+document.getElementById('btnWipeBackups').addEventListener('click', () => {
+  if (!confirm('Effacer tous les backups ?')) return;
+  STATE.backups = []; saveState(); renderBackups();
+  log('warn', 'Tous les backups effacés');
+});
+document.getElementById('btnCompare').addEventListener('click', compareWithBackup);
+document.getElementById('btnForceRestore').addEventListener('click', () => {
+  if (STATE.backups.length === 0) { log('err', 'Aucun backup'); return; }
+  if (!confirm('Force-restore depuis le backup le plus récent ?')) return;
+  restoreFromBackup(STATE.backups[0].id);
+});
+document.getElementById('restoreInput').addEventListener('change', e => {
+  const f = e.target.files[0]; if (!f) return;
+  const r = new FileReader();
+  r.onload = ev => {
+    try {
+      const data = JSON.parse(ev.target.result);
+      const arr = Array.isArray(data) ? data : [data];
+      arr.forEach(bk => {
+        if (bk.files) {
+          bk.id = uid();
+          STATE.backups.unshift(bk);
+        }
+      });
+      saveState(); renderBackups();
+      log('ok', `Importé ${arr.length} backup(s)`);
+    } catch (err) { log('err', 'JSON invalide : ' + err.message); }
+  };
+  r.readAsText(f);
+});
+document.getElementById('btnAddKb').addEventListener('click', () => {
+  const p = prompt('Pattern (nom court) :'); if (!p) return;
+  const f = prompt('Fix / correction recommandée :'); if (!f) return;
+  STATE.kb.push({ id: uid(), pattern: p, fix: f, count: 0, lastSeen: now() });
+  saveState(); renderKB();
+});
+document.getElementById('btnExportKb').addEventListener('click', () => {
+  download(`aura8-kb-${Date.now()}.json`, JSON.stringify(STATE.kb, null, 2), 'application/json');
+});
+document.getElementById('btnImportKb').addEventListener('click', () => document.getElementById('kbImportInput').click());
+document.getElementById('kbImportInput').addEventListener('change', e => {
+  const f = e.target.files[0]; if (!f) return;
+  const r = new FileReader();
+  r.onload = ev => {
+    try {
+      const data = JSON.parse(ev.target.result);
+      if (Array.isArray(data)) {
+        data.forEach(k => {
+          if (!STATE.kb.find(x => x.pattern === k.pattern)) STATE.kb.push(k);
+        });
+        saveState(); renderKB();
+        log('ok', `Importé ${data.length} entrée(s) KB`);
+      }
+    } catch (err) { log('err', 'KB invalide : ' + err.message); }
+  };
+  r.readAsText(f);
+});
+document.getElementById('btnResetKb').addEventListener('click', () => {
+  if (!confirm('Réinitialiser la KB ?')) return;
+  STATE.kb = []; seedKB(); renderKB();
+  log('warn', 'KB réinitialisée');
+});
+document.getElementById('btnRunTests').addEventListener('click', runTests);
+document.getElementById('btnClearTests').addEventListener('click', () => {
+  document.getElementById('testList').innerHTML = '';
+  document.getElementById('tPass').textContent = '—';
+  document.getElementById('tFail').textContent = '—';
+  document.getElementById('tTime').textContent = '—';
+});
+document.getElementById('btnExportFull').addEventListener('click', exportFullAudit);
+document.getElementById('btnExportMd').addEventListener('click', exportMarkdown);
+document.getElementById('btnCopyYaml').addEventListener('click', () => {
+  navigator.clipboard.writeText(document.getElementById('ciYaml').textContent);
+  log('ok', 'YAML copié');
+});
+
+/* -------- CONFIG INPUTS -------- */
+['cfgHeavy', 'cfgLine', 'cfgChunk', 'cfgDepth'].forEach(id => {
+  const el = document.getElementById(id);
+  el.addEventListener('change', () => {
+    const key = id.replace('cfg', '').toLowerCase();
+    STATE.config[key] = parseInt(el.value) || STATE.config[key];
+    saveState();
+  });
+});
+document.getElementById('cfgProfile').addEventListener('change', e => {
+  STATE.config.profile = e.target.value;
+  saveState();
+  log('info', `Profil → ${e.target.value}`);
+});
+document.querySelectorAll('.toggle').forEach(t => {
+  t.addEventListener('click', () => {
+    t.classList.toggle('on');
+    const key = t.dataset.toggle;
+    STATE.config[key] = t.classList.contains('on');
+    saveState();
+  });
+});
+
+/* -------- INIT -------- */
+function initConfigUI() {
+  document.getElementById('cfgHeavy').value = STATE.config.heavy;
+  document.getElementById('cfgLine').value = STATE.config.line;
+  document.getElementById('cfgChunk').value = STATE.config.chunk;
+  document.getElementById('cfgDepth').value = STATE.config.depth;
+  document.getElementById('cfgProfile').value = STATE.config.profile;
+  document.querySelectorAll('.toggle').forEach(t => {
+    const k = t.dataset.toggle;
+    t.classList.toggle('on', !!STATE.config[k]);
+  });
+  document.getElementById('aura8Config').textContent = JSON.stringify({
+    profile: 'aura8',
+    sectionMarkers: ['@section', '@AURA8', '/* === === */'],
+    splitStrategy: 'logical-sections',
+    maxLinesPerSection: 250,
+    detectors: ['heavy', 'braces', 'aura8Split', 'orphanRef', 'jsonValid'],
+    autoFixable: ['mixed-line-endings', 'trailing-whitespace']
+  }, null, 2);
+  document.getElementById('ciYaml').textContent = `name: Deploy AURA8 to Pages
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: \${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/configure-pages@v4
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: '.'
+      - id: deployment
+        uses: actions/deploy-pages@v4`;
+}
+
+loadState();
+initConfigUI();
+renderAll();
+log('ok', 'AURA8 v1.0 prêt · profil = ' + STATE.config.profile);
+log('info', 'Drop des fichiers ou clique "CHARGER DEMO AURA8" pour tester');
+</script>
+
+</body>
+</html>
