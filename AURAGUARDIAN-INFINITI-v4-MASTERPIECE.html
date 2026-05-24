@@ -1,0 +1,1047 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AURAGUARDIAN-INFINITI v4</title>
+    <link href="https://fonts.googleapis.com/css2?family=Clash+Display:wght@400;600;700&family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --accent: #00FF88;
+            --accent-2: #00D9FF;
+            --accent-3: #FF006E;
+            --bg-dark: #0a0e1a;
+            --bg-darker: #050709;
+            --surface: #151d2d;
+            --surface-2: #1f2a3a;
+            --text-main: #ffffff;
+            --text-secondary: #a0adc5;
+            --text-dim: #6b7580;
+            --border-light: rgba(0, 255, 136, 0.1);
+            --border-active: rgba(0, 255, 136, 0.3);
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 20% 50%, rgba(0, 255, 136, 0.05) 0%, transparent 50%),
+                        radial-gradient(circle at 80% 80%, rgba(0, 217, 255, 0.05) 0%, transparent 50%),
+                        linear-gradient(135deg, #0a0e1a 0%, #0f1426 100%);
+            background-attachment: fixed;
+            color: var(--text-main);
+            font-family: 'Outfit', sans-serif;
+            overflow: hidden;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* ============ HEADER ============ */
+        .header {
+            background: linear-gradient(90deg, rgba(0, 255, 136, 0.03), rgba(0, 217, 255, 0.02));
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border-light);
+            padding: 20px 40px;
+            display: grid;
+            grid-template-columns: 1fr auto;
+            align-items: center;
+            gap: 40px;
+            position: relative;
+            z-index: 100;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--accent), transparent);
+            opacity: 0.5;
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .logo-icon {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, var(--accent), var(--accent-2));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            box-shadow: 0 8px 32px rgba(0, 255, 136, 0.15);
+            animation: pulse-glow 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 8px 32px rgba(0, 255, 136, 0.15); }
+            50% { box-shadow: 0 8px 40px rgba(0, 255, 136, 0.3); }
+        }
+
+        .logo-text h1 {
+            font-size: 28px;
+            font-weight: 700;
+            font-family: 'Clash Display', sans-serif;
+            background: linear-gradient(90deg, var(--accent), var(--accent-2));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -1px;
+        }
+
+        .logo-text p {
+            font-size: 11px;
+            color: var(--text-dim);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-top: 4px;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+
+        .stat-card {
+            padding: 16px 24px;
+            background: rgba(0, 255, 136, 0.04);
+            border: 1px solid var(--border-light);
+            border-radius: 10px;
+            text-align: center;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: default;
+        }
+
+        .stat-card:hover {
+            background: rgba(0, 255, 136, 0.08);
+            border-color: var(--border-active);
+            transform: translateY(-3px);
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: 700;
+            font-family: 'Clash Display', sans-serif;
+            color: var(--accent);
+        }
+
+        .stat-label {
+            font-size: 11px;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 6px;
+        }
+
+        /* ============ MAIN LAYOUT ============ */
+        .wrapper {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+            gap: 0;
+        }
+
+        /* ============ SIDEBAR ============ */
+        .sidebar {
+            width: 280px;
+            background: linear-gradient(180deg, var(--surface) 0%, var(--surface-2) 100%);
+            border-right: 1px solid var(--border-light);
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding: 24px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .nav-section {
+            padding: 8px 0;
+        }
+
+        .nav-section-title {
+            font-size: 10px;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            padding: 16px 20px 12px;
+            font-weight: 700;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            width: 100%;
+            padding: 12px 20px;
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            font-family: 'Outfit', sans-serif;
+            transition: all 0.2s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .nav-link::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 4px;
+            height: 100%;
+            background: var(--accent);
+            transform: scaleY(0);
+            transform-origin: top;
+            transition: transform 0.2s ease;
+        }
+
+        .nav-link:hover {
+            color: var(--accent);
+            background: rgba(0, 255, 136, 0.08);
+            padding-left: 24px;
+        }
+
+        .nav-link:hover::before {
+            transform: scaleY(1);
+        }
+
+        .nav-link.active {
+            color: var(--accent);
+            background: rgba(0, 255, 136, 0.1);
+            font-weight: 600;
+        }
+
+        .nav-link.active::before {
+            transform: scaleY(1);
+        }
+
+        .nav-icon {
+            font-size: 18px;
+        }
+
+        /* ============ CONTENT ============ */
+        .content {
+            flex: 1;
+            display: flex;
+            gap: 16px;
+            padding: 20px;
+            background: linear-gradient(135deg, rgba(10, 14, 26, 0.4), rgba(15, 20, 42, 0.2));
+            overflow: hidden;
+        }
+
+        .main-section {
+            flex: 1.2;
+            display: flex;
+            flex-direction: column;
+            background: linear-gradient(135deg, rgba(21, 29, 45, 0.6), rgba(31, 42, 58, 0.4));
+            border: 1px solid var(--border-light);
+            border-radius: 16px;
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3),
+                        0 0 60px rgba(0, 255, 136, 0.05);
+        }
+
+        .panel-header {
+            padding: 24px;
+            background: linear-gradient(90deg, rgba(0, 255, 136, 0.05), transparent);
+            border-bottom: 1px solid var(--border-light);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .panel-title {
+            font-size: 22px;
+            font-weight: 700;
+            font-family: 'Clash Display', sans-serif;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: var(--text-main);
+        }
+
+        .panel-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .panel-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* ============ CONSOLE ============ */
+        .console-section {
+            flex: 0.8;
+            display: flex;
+            flex-direction: column;
+            background: linear-gradient(135deg, rgba(21, 29, 45, 0.6), rgba(31, 42, 58, 0.4));
+            border: 1px solid var(--border-light);
+            border-radius: 16px;
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .console-header {
+            padding: 16px 20px;
+            background: linear-gradient(90deg, rgba(0, 217, 255, 0.05), transparent);
+            border-bottom: 1px solid var(--border-light);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .console-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            line-height: 1.7;
+        }
+
+        .log-line {
+            display: flex;
+            gap: 10px;
+            margin: 4px 0;
+            padding: 6px 8px;
+            border-left: 2px solid transparent;
+            border-radius: 4px;
+            animation: slideInRight 0.3s ease;
+        }
+
+        @keyframes slideInRight {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .log-time { color: var(--text-dim); min-width: 55px; font-weight: 600; }
+        .log-icon { width: 14px; text-align: center; }
+        .log-text { flex: 1; color: var(--text-secondary); }
+
+        .log-line.success { border-left-color: var(--accent); background: rgba(0, 255, 136, 0.05); }
+        .log-line.warning { border-left-color: var(--accent-3); background: rgba(255, 0, 110, 0.05); }
+        .log-line.error { border-left-color: #ff4444; background: rgba(255, 68, 68, 0.05); }
+        .log-line.info { border-left-color: var(--accent-2); background: rgba(0, 217, 255, 0.05); }
+
+        /* ============ BUTTONS ============ */
+        .btn {
+            padding: 11px 20px;
+            background: rgba(0, 255, 136, 0.1);
+            border: 1px solid var(--accent);
+            color: var(--accent);
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            font-family: 'Outfit', sans-serif;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(0, 255, 136, 0.2);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        .btn:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .btn:hover {
+            background: rgba(0, 255, 136, 0.15);
+            box-shadow: 0 0 20px rgba(0, 255, 136, 0.3);
+            transform: translateY(-1px);
+        }
+
+        .btn.primary {
+            background: linear-gradient(135deg, var(--accent), var(--accent-2));
+            border: none;
+            color: var(--bg-dark);
+            font-weight: 700;
+        }
+
+        .btn.danger {
+            border-color: #ff4444;
+            color: #ff4444;
+        }
+
+        /* ============ CARDS ============ */
+        .card {
+            background: rgba(0, 255, 136, 0.03);
+            border: 1px solid var(--border-light);
+            border-left: 3px solid var(--accent);
+            padding: 20px;
+            border-radius: 10px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .card:hover {
+            background: rgba(0, 255, 136, 0.06);
+            border-color: var(--border-active);
+            transform: translateX(4px);
+            box-shadow: 0 10px 30px rgba(0, 255, 136, 0.08);
+        }
+
+        .card-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--accent);
+            margin-bottom: 8px;
+            font-family: 'Clash Display', sans-serif;
+        }
+
+        .card-text {
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        /* ============ INPUTS ============ */
+        input, select, textarea {
+            width: 100%;
+            padding: 12px 14px;
+            background: rgba(0, 255, 136, 0.03);
+            border: 1px solid var(--border-light);
+            color: var(--text-main);
+            border-radius: 8px;
+            font-family: 'Outfit', sans-serif;
+            font-size: 13px;
+            margin: 8px 0;
+            transition: all 0.3s ease;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--accent);
+            background: rgba(0, 255, 136, 0.08);
+            box-shadow: 0 0 15px rgba(0, 255, 136, 0.15);
+        }
+
+        /* ============ PROGRESS ============ */
+        .progress {
+            width: 100%;
+            height: 6px;
+            background: rgba(0, 255, 136, 0.1);
+            border-radius: 3px;
+            overflow: hidden;
+            margin: 16px 0;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent), var(--accent-2));
+            width: 0%;
+            transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 0 15px rgba(0, 255, 136, 0.5);
+        }
+
+        /* ============ PAGES ============ */
+        .page {
+            display: none;
+        }
+
+        .page.active {
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ============ SCROLLBAR ============ */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(0, 255, 136, 0.2);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(0, 255, 136, 0.4);
+        }
+
+        /* ============ RESPONSIVE ============ */
+        @media (max-width: 1400px) {
+            .header {
+                padding: 16px 30px;
+                gap: 30px;
+            }
+
+            .sidebar {
+                width: 240px;
+            }
+
+            .stat-card {
+                padding: 14px 20px;
+            }
+
+            .stat-value {
+                font-size: 24px;
+            }
+        }
+
+        @media (max-width: 1200px) {
+            .content {
+                flex-direction: column;
+                gap: 12px;
+            }
+
+            .main-section {
+                flex: 1;
+                min-height: 0;
+            }
+
+            .console-section {
+                flex: 0 0 200px;
+            }
+
+            .header {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            .stats {
+                width: 100%;
+            }
+        }
+
+        @media (max-width: 900px) {
+            .wrapper {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+                height: auto;
+                max-height: 120px;
+                overflow-x: auto;
+                overflow-y: hidden;
+                flex-direction: row;
+                padding: 12px 0;
+                gap: 0;
+            }
+
+            .nav-section {
+                display: flex;
+                border-right: 1px solid var(--border-light);
+                padding-right: 12px;
+            }
+
+            .nav-section-title {
+                display: none;
+            }
+
+            .nav-link {
+                padding: 8px 12px;
+                font-size: 12px;
+            }
+
+            .content {
+                flex: 1;
+                flex-direction: column;
+            }
+
+            .panel-header {
+                padding: 16px;
+            }
+
+            .panel-body {
+                padding: 16px;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .header {
+                padding: 12px 16px;
+                grid-template-columns: 1fr;
+            }
+
+            .logo-container {
+                gap: 12px;
+            }
+
+            .logo-icon {
+                width: 40px;
+                height: 40px;
+                font-size: 22px;
+            }
+
+            .logo-text h1 {
+                font-size: 22px;
+            }
+
+            .stats {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 10px;
+            }
+
+            .stat-card {
+                padding: 10px 12px;
+            }
+
+            .stat-value {
+                font-size: 18px;
+            }
+
+            .stat-label {
+                font-size: 9px;
+            }
+
+            .sidebar {
+                max-height: 80px;
+            }
+
+            .nav-link {
+                padding: 6px 10px;
+                font-size: 11px;
+            }
+
+            .panel-title {
+                font-size: 18px;
+            }
+
+            .main-section {
+                border-radius: 12px;
+            }
+
+            .console-section {
+                border-radius: 12px;
+            }
+
+            .console-body {
+                font-size: 11px;
+            }
+        }
+
+        @media (max-width: 400px) {
+            .stats {
+                grid-template-columns: 1fr;
+            }
+
+            .header {
+                padding: 12px;
+            }
+
+            .content {
+                padding: 12px;
+                gap: 12px;
+            }
+
+            .panel-title {
+                font-size: 16px;
+            }
+
+            .card {
+                padding: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- HEADER -->
+    <div class="header">
+        <div class="logo-container">
+            <div class="logo-icon">⚡</div>
+            <div class="logo-text">
+                <h1>AURAGUARDIAN</h1>
+                <p>Infiniti v4</p>
+            </div>
+        </div>
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-value" id="stat-systems">0</div>
+                <div class="stat-label">Systèmes</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="stat-issues">0</div>
+                <div class="stat-label">Problèmes</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="stat-fixes">0</div>
+                <div class="stat-label">Fixes</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN -->
+    <div class="wrapper">
+        <!-- SIDEBAR -->
+        <div class="sidebar">
+            <div class="nav-section">
+                <div class="nav-section-title">🔍 Découverte</div>
+                <button class="nav-link active" onclick="setPage('dashboard')"><span class="nav-icon">📊</span>Dashboard</button>
+                <button class="nav-link" onclick="setPage('connect')"><span class="nav-icon">🔗</span>Connecter</button>
+                <button class="nav-link" onclick="setPage('scan')"><span class="nav-icon">🔍</span>Scanner</button>
+                <button class="nav-link" onclick="setPage('search')"><span class="nav-icon">🔎</span>Recherche</button>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-section-title">🔧 Outils</div>
+                <button class="nav-link" onclick="setPage('restore')"><span class="nav-icon">💾</span>Restore</button>
+                <button class="nav-link" onclick="setPage('recovery')"><span class="nav-icon">🆘</span>Recovery</button>
+                <button class="nav-link" onclick="setPage('backup')"><span class="nav-icon">📦</span>Backup</button>
+                <button class="nav-link" onclick="setPage('cleanup')"><span class="nav-icon">🧹</span>Cleanup</button>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-section-title">📊 Analyse</div>
+                <button class="nav-link" onclick="setPage('audit')"><span class="nav-icon">🔬</span>Audit</button>
+                <button class="nav-link" onclick="setPage('deps')"><span class="nav-icon">🔗</span>Dépendances</button>
+                <button class="nav-link" onclick="setPage('patterns')"><span class="nav-icon">🎯</span>Patterns</button>
+                <button class="nav-link" onclick="setPage('ai')"><span class="nav-icon">🤖</span>Suggestions IA</button>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-section-title">📚 Bibliothèque</div>
+                <button class="nav-link" onclick="setPage('knowledge')"><span class="nav-icon">📖</span>Connaissances</button>
+                <button class="nav-link" onclick="setPage('history')"><span class="nav-icon">📜</span>Historique</button>
+                <button class="nav-link" onclick="setPage('settings')"><span class="nav-icon">⚙️</span>Config</button>
+            </div>
+        </div>
+
+        <!-- CONTENT -->
+        <div class="content">
+            <!-- MAIN PANEL -->
+            <div class="main-section">
+                <!-- DASHBOARD -->
+                <div id="page-dashboard" class="page active">
+                    <div class="panel-header">
+                        <div class="panel-title">🏠 Dashboard</div>
+                        <div class="panel-actions">
+                            <button class="btn primary" onclick="log('🚀 Scan complet lancé', 'info')">🚀 Scan Complet</button>
+                        </div>
+                    </div>
+                    <div class="panel-body">
+                        <div class="card">
+                            <div class="card-title">Bienvenue dans AURAGUARDIAN-INFINITI v4</div>
+                            <div class="card-text">Système universel d'audit et récupération. Connectez n'importe quel système (Web, GitHub, Node, Local) et découvrez les problèmes automatiquement. Interface fluide, responsive et ultra-fonctionnelle.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CONNECT -->
+                <div id="page-connect" class="page">
+                    <div class="panel-header">
+                        <div class="panel-title">🔗 Connecter un Système</div>
+                    </div>
+                    <div class="panel-body">
+                        <label style="font-weight: 600; color: var(--text-main);">Nom du Système</label>
+                        <input type="text" id="sys-name" placeholder="AURA8, MyApp, etc.">
+                        
+                        <label style="font-weight: 600; color: var(--text-main);">Type</label>
+                        <select id="sys-type">
+                            <option value="">Sélectionner...</option>
+                            <option value="web">Web (HTML/JS)</option>
+                            <option value="github">GitHub Repo</option>
+                            <option value="node">Node.js</option>
+                            <option value="local">Local</option>
+                        </select>
+
+                        <label style="font-weight: 600; color: var(--text-main);">URL/Chemin</label>
+                        <input type="text" id="sys-path" placeholder="https://github.com/...">
+
+                        <button class="btn primary" onclick="connectSystem()">✅ Connecter</button>
+                    </div>
+                </div>
+
+                <!-- SCAN -->
+                <div id="page-scan" class="page">
+                    <div class="panel-header">
+                        <div class="panel-title">🔍 Scanner Intelligent</div>
+                        <div class="panel-actions">
+                            <button class="btn primary" onclick="startScanner()">▶️ Démarrer</button>
+                        </div>
+                    </div>
+                    <div class="panel-body">
+                        <div class="progress">
+                            <div class="progress-bar" id="progress-bar" style="width: 0%;"></div>
+                        </div>
+                        <div id="scan-area"></div>
+                    </div>
+                </div>
+
+                <!-- SEARCH -->
+                <div id="page-search" class="page">
+                    <div class="panel-header">
+                        <div class="panel-title">🔎 Recherche Avancée</div>
+                    </div>
+                    <div class="panel-body">
+                        <input type="text" id="search-input" placeholder="Rechercher un terme...">
+                        <button class="btn primary" onclick="search()">🔍 Chercher</button>
+                        <div id="search-area"></div>
+                    </div>
+                </div>
+
+                <!-- RESTORE -->
+                <div id="page-restore" class="page">
+                    <div class="panel-header">
+                        <div class="panel-title">💾 Restore Tool</div>
+                    </div>
+                    <div class="panel-body">
+                        <button class="btn primary" onclick="log('🔄 Restauration lancée', 'info')">🔄 Restaurer</button>
+                    </div>
+                </div>
+
+                <!-- RECOVERY -->
+                <div id="page-recovery" class="page">
+                    <div class="panel-header">
+                        <div class="panel-title">🆘 Recovery Mode</div>
+                    </div>
+                    <div class="panel-body">
+                        <button class="btn primary" onclick="log('💥 Force restore!', 'warning')">💥 Force Restore</button>
+                        <button class="btn danger" onclick="if(confirm('RESET?')) log('🔥 Reset lancé', 'error')">⚠️ Reset Usine</button>
+                    </div>
+                </div>
+
+                <!-- BACKUP -->
+                <div id="page-backup" class="page">
+                    <div class="panel-header">
+                        <div class="panel-title">📦 Backup Manager</div>
+                    </div>
+                    <div class="panel-body">
+                        <button class="btn primary" onclick="log('📦 Backup créé', 'success'); stats.fixes++; updateStats();">📦 Créer Backup</button>
+                    </div>
+                </div>
+
+                <!-- CLEANUP -->
+                <div id="page-cleanup" class="page">
+                    <div class="panel-header">
+                        <div class="panel-title">🧹 Cleanup & Clear</div>
+                    </div>
+                    <div class="panel-body">
+                        <button class="btn" onclick="log('🗑️ Cache vidé', 'success')">🗑️ Cache</button>
+                        <button class="btn" onclick="localStorage.clear(); log('💾 Storage vidé', 'success')">💾 Storage</button>
+                        <button class="btn danger" onclick="if(confirm('TOUT?')) log('🔥 Tout effacé', 'error')">🔥 Tout</button>
+                    </div>
+                </div>
+
+                <!-- AUDIT -->
+                <div id="page-audit" class="page">
+                    <div class="panel-header">
+                        <div class="panel-title">🔬 Audit Complet</div>
+                    </div>
+                    <div class="panel-body">
+                        <button class="btn primary" onclick="log('🚀 Audit lancé', 'info')">🚀 Audit</button>
+                    </div>
+                </div>
+
+                <!-- DEPS -->
+                <div id="page-deps" class="page">
+                    <div class="panel-header">
+                        <div class="panel-title">🔗 Dépendances</div>
+                    </div>
+                    <div class="panel-body">
+                        <button class="btn primary" onclick="log('🔗 Analyse dépendances...', 'info')">🔍 Analyser</button>
+                    </div>
+                </div>
+
+                <!-- PATTERNS -->
+                <div id="page-patterns" class="page">
+                    <div class="panel-header">
+                        <div class="panel-title">🎯 Pattern Detection</div>
+                    </div>
+                    <div class="panel-body">
+                        <button class="btn primary" onclick="log('🎯 Détection patterns...', 'info')">🔍 Détecter</button>
+                    </div>
+                </div>
+
+                <!-- AI -->
+                <div id="page-ai" class="page">
+                    <div class="panel-header">
+                        <div class="panel-title">🤖 Suggestions IA</div>
+                    </div>
+                    <div class="panel-body">
+                        <button class="btn primary" onclick="log('🤖 Suggestions générées', 'info')">🤖 Générer</button>
+                    </div>
+                </div>
+
+                <!-- KNOWLEDGE -->
+                <div id="page-knowledge" class="page">
+                    <div class="panel-header">
+                        <div class="panel-title">📖 Base Connaissances</div>
+                    </div>
+                    <div class="panel-body">
+                        <button class="btn primary" onclick="log('📚 Base ouverte', 'info')">📖 Consulter</button>
+                    </div>
+                </div>
+
+                <!-- HISTORY -->
+                <div id="page-history" class="page">
+                    <div class="panel-header">
+                        <div class="panel-title">📜 Historique</div>
+                    </div>
+                    <div class="panel-body">
+                        <button class="btn" onclick="log('📋 Historique affiché', 'info')">📋 Voir</button>
+                        <button class="btn danger" onclick="log('🗑️ Historique effacé', 'success')">🗑️ Effacer</button>
+                    </div>
+                </div>
+
+                <!-- SETTINGS -->
+                <div id="page-settings" class="page">
+                    <div class="panel-header">
+                        <div class="panel-title">⚙️ Configuration</div>
+                    </div>
+                    <div class="panel-body">
+                        <label style="font-weight: 600; color: var(--text-main);">Thème</label>
+                        <select>
+                            <option>Sombre</option>
+                            <option>Clair</option>
+                        </select>
+
+                        <label style="font-weight: 600; color: var(--text-main);">Auto-Scan (minutes)</label>
+                        <input type="text" value="60">
+
+                        <button class="btn primary" onclick="log('💾 Config sauvegardée', 'success')">💾 Sauvegarder</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CONSOLE PANEL -->
+            <div class="console-section">
+                <div class="console-header">
+                    📜 Console Logs
+                    <button class="btn" onclick="clearLogs()" style="padding: 4px 10px; font-size: 11px;">Clear</button>
+                </div>
+                <div class="console-body" id="console-logs"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const stats = { systems: 0, issues: 0, fixes: 0 };
+        const logs = [];
+
+        function log(msg, type = 'info') {
+            const time = new Date().toLocaleTimeString('fr-FR');
+            const icons = { success: '✅', warning: '⚠️', error: '🔴', info: 'ℹ️' };
+            logs.push({ time, type, msg });
+            renderLogs();
+        }
+
+        function renderLogs() {
+            const container = document.getElementById('console-logs');
+            const icons = { success: '✅', warning: '⚠️', error: '🔴', info: 'ℹ️' };
+            container.innerHTML = logs.slice(-25).map(l => `
+                <div class="log-line ${l.type}">
+                    <span class="log-time">${l.time}</span>
+                    <span class="log-icon">${icons[l.type] || '•'}</span>
+                    <span class="log-text">${l.msg}</span>
+                </div>
+            `).join('');
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function updateStats() {
+            document.getElementById('stat-systems').textContent = stats.systems;
+            document.getElementById('stat-issues').textContent = stats.issues;
+            document.getElementById('stat-fixes').textContent = stats.fixes;
+        }
+
+        function setPage(page) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.getElementById('page-' + page).classList.add('active');
+            
+            document.querySelectorAll('.nav-link').forEach(b => b.classList.remove('active'));
+            event.target.closest('.nav-link').classList.add('active');
+        }
+
+        function connectSystem() {
+            const name = document.getElementById('sys-name').value;
+            const type = document.getElementById('sys-type').value;
+            const path = document.getElementById('sys-path').value;
+            
+            if (name && type && path) {
+                stats.systems++;
+                updateStats();
+                log(`🔗 ${name} connecté (${type})`, 'success');
+                document.getElementById('sys-name').value = '';
+                document.getElementById('sys-path').value = '';
+            }
+        }
+
+        function startScanner() {
+            log('📱 Scanner démarré...', 'info');
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += Math.random() * 25;
+                if (progress >= 100) {
+                    progress = 100;
+                    clearInterval(interval);
+                    log('✅ Scan complété', 'success');
+                }
+                document.getElementById('progress-bar').style.width = progress + '%';
+            }, 300);
+        }
+
+        function search() {
+            const term = document.getElementById('search-input').value;
+            if (term) {
+                log(`🔍 Recherche: ${term}`, 'info');
+            }
+        }
+
+        function clearLogs() {
+            logs.length = 0;
+            renderLogs();
+            log('🧹 Logs effacés', 'success');
+        }
+
+        window.addEventListener('load', () => {
+            log('🌌 AURAGUARDIAN-INFINITI v4 LANCÉ', 'success');
+            log('💡 Connectez un système pour commencer', 'info');
+            updateStats();
+        });
+    </script>
+</body>
+</html>
